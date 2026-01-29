@@ -2,6 +2,7 @@
 #define IHASH_ALGORITHM_H
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -21,6 +22,10 @@ namespace core {
  */
 class IHashAlgorithm {
 public:
+    /// @brief Callback function type for cancellation check
+    /// @return true if operation should be cancelled
+    using CancelCallback = std::function<bool()>;
+
     virtual ~IHashAlgorithm() = default;
 
     /// @return Algorithm name (e.g., "SHA-256", "MD5")
@@ -47,6 +52,10 @@ public:
     /// @throws std::runtime_error if file cannot be opened
     std::vector<uint8_t> computeFile(const std::wstring& filePath);
 
+    /// @brief Set cancellation callback
+    /// @param callback Function to check if operation should be cancelled
+    void setCancelCallback(CancelCallback callback) { m_cancelCallback = callback; }
+
     /// @brief Convert digest to hex string
     static std::string toHexString(const std::vector<uint8_t>& digest, bool uppercase = false);
 
@@ -62,6 +71,10 @@ public:
     void update(const std::vector<uint8_t>& data) {
         update(data.data(), data.size());
     }
+
+protected:
+    /// @brief Callback for cancellation check
+    CancelCallback m_cancelCallback;
 };
 
 } // namespace core

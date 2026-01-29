@@ -82,34 +82,17 @@ public:
         // Append padding byte
         m_buffer[m_count++] = 0x01; 
         
-        // Calculate padding index
-        // We need m_count to be 118 (BLOCKSIZE - 10)
-        size_t padLen;
-        if (m_count <= (BLOCKSIZE - 10)) {
-            padLen = (BLOCKSIZE - 10) - m_count;
-        } else {
-            padLen = (2 * BLOCKSIZE - 10) - m_count;
-        }
-        
-        std::memset(m_buffer + m_count, 0, padLen);
-        m_count += padLen;
-        
-        // If we filled a block, transform it (but we shouldn't have based on logic above unless count was small)
-        // Actually, if m_count becomes 118, we are in the same block.
-        // If we crossed block boundary, we need to transform.
-        // My logic above calculates remaining space in CURRENT or NEXT block.
-        
-        // Let's use simple logic:
+        // Check if we have enough space for the trailer (10 bytes: 2 for version + 8 for length)
         if (m_count > (BLOCKSIZE - 10)) {
-            // Not enough space for trailer, pad to end, transform, then pad to 118
-             std::memset(m_buffer + m_count, 0, BLOCKSIZE - m_count);
-             Transform(m_buffer);
-             m_count = 0;
-             std::memset(m_buffer, 0, BLOCKSIZE - 10);
-             m_count = BLOCKSIZE - 10;
+            // Not enough space in current block, pad to end and transform
+            std::memset(m_buffer + m_count, 0, BLOCKSIZE - m_count);
+            Transform(m_buffer);
+            m_count = 0;
         }
         
-        // Now m_count should be exactly BLOCKSIZE - 10 (118)
+        // Pad with zeros to position BLOCKSIZE - 10 (118)
+        std::memset(m_buffer + m_count, 0, (BLOCKSIZE - 10) - m_count);
+        m_count = BLOCKSIZE - 10;
         
         // Append Version info (2 bytes)
         // Byte 1: (PASSES << 3) | VERSION(1)
@@ -119,7 +102,9 @@ public:
         
         // Append Length in bits (64-bit little endian)
         CryptoPP::PutWord(false, CryptoPP::LITTLE_ENDIAN_ORDER, m_buffer + m_count, (CryptoPP::word64)totalBits); 
+        m_count += 8;
         
+        // Transform the final block
         Transform(m_buffer);
 
         // Apply final tailoring
