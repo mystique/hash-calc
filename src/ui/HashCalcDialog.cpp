@@ -17,6 +17,27 @@ CHashCalcDialog::CHashCalcDialog()
     m_bCancelCalculation(false), 
     m_bIsCalculating(false) {}
 
+BOOL CHashCalcDialog::PreTranslateMessage(MSG& msg) {
+  // Handle Enter key in edit boxes
+  if (msg.message == WM_KEYDOWN && msg.wParam == VK_RETURN) {
+    HWND hFocus = ::GetFocus();
+    HWND hFileEdit = GetDlgItem(IDC_EDIT_FILE);
+    HWND hTextEdit = GetDlgItem(IDC_EDIT_TEXT);
+    
+    if (hFocus == hFileEdit && IsDlgButtonChecked(IDC_RADIO_FILE)) {
+      // User pressed Enter in file path edit box
+      OnFilePathEnter();
+      return TRUE; // Message handled
+    } else if (hFocus == hTextEdit && IsDlgButtonChecked(IDC_RADIO_TEXT)) {
+      // User pressed Enter in text input box
+      OnCalculate();
+      return TRUE; // Message handled
+    }
+  }
+  
+  return CDialog::PreTranslateMessage(msg);
+}
+
 BOOL CHashCalcDialog::OnInitDialog() {
   // Call base class implementation
   CDialog::OnInitDialog();
@@ -33,7 +54,7 @@ BOOL CHashCalcDialog::OnInitDialog() {
   // Set default input mode to Text
   CheckRadioButton(IDC_RADIO_TEXT, IDC_RADIO_FILE, IDC_RADIO_TEXT);
 
-  // Enable text input by default
+  // Enable text input by default, disable file path input
   GetDlgItem(IDC_EDIT_TEXT).EnableWindow(TRUE);
   GetDlgItem(IDC_EDIT_FILE).EnableWindow(FALSE);
   GetDlgItem(IDC_BUTTON_BROWSE).EnableWindow(FALSE);
@@ -79,6 +100,9 @@ BOOL CHashCalcDialog::OnInitDialog() {
   // Enable drag and drop for files
   DragAcceptFiles(TRUE);
 
+  // Initialize button states based on initial conditions
+  UpdateButtonStates();
+
   return TRUE;
 }
 
@@ -118,6 +142,7 @@ BOOL CHashCalcDialog::OnCommand(WPARAM wparam, LPARAM lparam) {
       GetDlgItem(IDC_EDIT_TEXT).EnableWindow(TRUE);
       GetDlgItem(IDC_EDIT_FILE).EnableWindow(FALSE);
       GetDlgItem(IDC_BUTTON_BROWSE).EnableWindow(FALSE);
+      UpdateButtonStates();
     }
     return TRUE;
 
@@ -126,12 +151,52 @@ BOOL CHashCalcDialog::OnCommand(WPARAM wparam, LPARAM lparam) {
       GetDlgItem(IDC_EDIT_TEXT).EnableWindow(FALSE);
       GetDlgItem(IDC_EDIT_FILE).EnableWindow(TRUE);
       GetDlgItem(IDC_BUTTON_BROWSE).EnableWindow(TRUE);
+      // Set focus to file path edit box
+      ::SetFocus(GetDlgItem(IDC_EDIT_FILE));
+      UpdateButtonStates();
+    }
+    return TRUE;
+
+  case IDC_EDIT_FILE:
+    if (code == EN_CHANGE) {
+      // File path changed - update button states
+      UpdateButtonStates();
+    }
+    return TRUE;
+
+  case IDC_EDIT_TEXT:
+    if (code == EN_CHANGE) {
+      // Text input changed - update button states
+      UpdateButtonStates();
     }
     return TRUE;
 
   case IDC_CHECK_STAY_ON_TOP:
     OnStayOnTop();
     return TRUE;
+  }
+
+  // Handle all algorithm checkbox changes
+  if (code == BN_CLICKED) {
+    int algorithmIDs[] = {
+      IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
+      IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
+      IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
+      IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32,
+      IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
+      IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
+      IDC_SHAKE_128, IDC_SHAKE_256,
+      IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
+      IDC_BLAKE2B, IDC_BLAKE2S,
+      IDC_LSH_256, IDC_LSH_512
+    };
+    
+    for (int algoId : algorithmIDs) {
+      if (id == algoId) {
+        UpdateButtonStates();
+        return TRUE;
+      }
+    }
   }
 
   return FALSE;
@@ -147,6 +212,16 @@ LRESULT CHashCalcDialog::OnNotify(WPARAM wparam, LPARAM lparam) {
 }
 
 INT_PTR CHashCalcDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+  // Handle Enter key in file path edit box
+  if (uMsg == WM_COMMAND) {
+    UINT id = LOWORD(wParam);
+    UINT code = HIWORD(wParam);
+    
+    if (id == IDC_EDIT_FILE && code == EN_SETFOCUS) {
+      // Store original procedure for subclassing if needed
+    }
+  }
+  
   if (uMsg == WM_DROPFILES) {
     OnDropFiles((HDROP)wParam);
     return TRUE;
@@ -168,6 +243,9 @@ INT_PTR CHashCalcDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
     
     // Hide progress bar
     ShowProgressBar(false);
+    
+    // Update button states after calculation completes
+    UpdateButtonStates();
     
     if (m_hCalcThread) {
       CloseHandle(m_hCalcThread);
@@ -343,6 +421,9 @@ void CHashCalcDialog::OnSelectAll() {
   // LSH
   CheckDlgButton(IDC_LSH_256, BST_CHECKED);
   CheckDlgButton(IDC_LSH_512, BST_CHECKED);
+  
+  // Update button states after selection
+  UpdateButtonStates();
 }
 
 void CHashCalcDialog::OnClearAll() {
@@ -399,6 +480,9 @@ void CHashCalcDialog::OnClearAll() {
   // LSH
   CheckDlgButton(IDC_LSH_256, BST_UNCHECKED);
   CheckDlgButton(IDC_LSH_512, BST_UNCHECKED);
+  
+  // Update button states after clearing
+  UpdateButtonStates();
 }
 
 void CHashCalcDialog::EnableControls(bool enable) {
@@ -894,15 +978,15 @@ void CHashCalcDialog::OnCalculate() {
     // Check if file path is empty
     CString wFilePath = GetDlgItemText(IDC_EDIT_FILE);
     if (wFilePath.IsEmpty()) {
-      SetDlgItemText(IDC_EDIT_RESULT, L"Please select a file to hash.");
+      SetDlgItemText(IDC_EDIT_RESULT, L"Please enter or select a file to hash.");
       return;
     }
     
-    // Check if file exists
+    // Validate file path
     std::wstring filePath = wFilePath.GetString();
-    DWORD dwAttrib = GetFileAttributes(filePath.c_str());
-    if (dwAttrib == INVALID_FILE_ATTRIBUTES) {
-      SetDlgItemText(IDC_EDIT_RESULT, L"Error: File does not exist.");
+    std::wstring errorMsg;
+    if (!ValidateFilePath(filePath, errorMsg)) {
+      SetDlgItemText(IDC_EDIT_RESULT, errorMsg.c_str());
       return;
     }
   }
@@ -1042,4 +1126,182 @@ void CHashCalcDialog::ShowProgressBar(bool show) {
     ::SendMessage(hProgress, PBM_SETMARQUEE, FALSE, 0); // Stop marquee animation
     ::ShowWindow(hProgress, SW_HIDE);
   }
+}
+
+void CHashCalcDialog::OnFilePathEnter() {
+  // Triggered when user presses Enter in file path edit box
+  if (IsDlgButtonChecked(IDC_RADIO_FILE)) {
+    // Automatically trigger calculation
+    OnCalculate();
+  }
+}
+
+bool CHashCalcDialog::ValidateFilePath(const std::wstring& filePath, std::wstring& errorMsg) {
+  // Trim leading and trailing whitespace
+  std::wstring trimmedPath = filePath;
+  size_t start = trimmedPath.find_first_not_of(L" \t\r\n");
+  size_t end = trimmedPath.find_last_not_of(L" \t\r\n");
+  
+  if (start == std::wstring::npos) {
+    errorMsg = L"Error: File path is empty or contains only whitespace.";
+    return false;
+  }
+  
+  trimmedPath = trimmedPath.substr(start, end - start + 1);
+  
+  // Remove surrounding quotes if present
+  if (trimmedPath.length() >= 2 && 
+      ((trimmedPath.front() == L'\"' && trimmedPath.back() == L'\"') ||
+       (trimmedPath.front() == L'\'' && trimmedPath.back() == L'\''))) {
+    trimmedPath = trimmedPath.substr(1, trimmedPath.length() - 2);
+  }
+  
+  // Update the edit box with trimmed path if different
+  if (trimmedPath != filePath) {
+    SetDlgItemText(IDC_EDIT_FILE, trimmedPath.c_str());
+  }
+  
+  // Check if path is too long
+  if (trimmedPath.length() >= MAX_PATH) {
+    errorMsg = L"Error: File path is too long (max " + std::to_wstring(MAX_PATH) + L" characters).";
+    return false;
+  }
+  
+  // Check for invalid characters in path
+  const std::wstring invalidChars = L"<>|";
+  for (wchar_t ch : invalidChars) {
+    if (trimmedPath.find(ch) != std::wstring::npos) {
+      errorMsg = L"Error: File path contains invalid character: ";
+      errorMsg += ch;
+      return false;
+    }
+  }
+  
+  // Check if file exists
+  DWORD dwAttrib = GetFileAttributes(trimmedPath.c_str());
+  if (dwAttrib == INVALID_FILE_ATTRIBUTES) {
+    DWORD error = GetLastError();
+    switch (error) {
+      case ERROR_FILE_NOT_FOUND:
+        errorMsg = L"Error: File not found.\nPath: " + trimmedPath;
+        break;
+      case ERROR_PATH_NOT_FOUND:
+        errorMsg = L"Error: Path not found. Please check if the directory exists.\nPath: " + trimmedPath;
+        break;
+      case ERROR_ACCESS_DENIED:
+        errorMsg = L"Error: Access denied. Please check file permissions.\nPath: " + trimmedPath;
+        break;
+      case ERROR_INVALID_NAME:
+        errorMsg = L"Error: Invalid file name or path.\nPath: " + trimmedPath;
+        break;
+      default:
+        errorMsg = L"Error: Cannot access file (Error code: " + std::to_wstring(error) + L").\nPath: " + trimmedPath;
+        break;
+    }
+    return false;
+  }
+  
+  // Check if it's a directory
+  if (dwAttrib & FILE_ATTRIBUTE_DIRECTORY) {
+    errorMsg = L"Error: The path points to a directory, not a file.\nPath: " + trimmedPath;
+    return false;
+  }
+  
+  // Check if file is readable
+  HANDLE hFile = CreateFile(trimmedPath.c_str(), GENERIC_READ, 
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 
+                           NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (hFile == INVALID_HANDLE_VALUE) {
+    DWORD error = GetLastError();
+    if (error == ERROR_SHARING_VIOLATION) {
+      errorMsg = L"Warning: File is currently in use by another program.\nPath: " + trimmedPath + 
+                 L"\n\nAttempting to read anyway...";
+      // Continue anyway - sometimes we can still read files that are open
+    } else {
+      errorMsg = L"Error: Cannot open file for reading (Error code: " + std::to_wstring(error) + L").\nPath: " + trimmedPath;
+      return false;
+    }
+  } else {
+    CloseHandle(hFile);
+  }
+  
+  return true;
+}
+
+bool CHashCalcDialog::HasAnyAlgorithmSelected() {
+  int algorithmIDs[] = {
+    IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
+    IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
+    IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
+    IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32,
+    IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
+    IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
+    IDC_SHAKE_128, IDC_SHAKE_256,
+    IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
+    IDC_BLAKE2B, IDC_BLAKE2S,
+    IDC_LSH_256, IDC_LSH_512
+  };
+  
+  for (int id : algorithmIDs) {
+    if (IsDlgButtonChecked(id)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+bool CHashCalcDialog::HasAllAlgorithmsSelected() {
+  int algorithmIDs[] = {
+    IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
+    IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
+    IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
+    IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32,
+    IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
+    IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
+    IDC_SHAKE_128, IDC_SHAKE_256,
+    IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
+    IDC_BLAKE2B, IDC_BLAKE2S,
+    IDC_LSH_256, IDC_LSH_512
+  };
+  
+  for (int id : algorithmIDs) {
+    if (!IsDlgButtonChecked(id)) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+bool CHashCalcDialog::HasValidInput() {
+  if (IsDlgButtonChecked(IDC_RADIO_TEXT)) {
+    // Check if text input is not empty
+    CString wText = GetDlgItemText(IDC_EDIT_TEXT);
+    return !wText.IsEmpty();
+  } else {
+    // Check if file path is not empty
+    CString wFilePath = GetDlgItemText(IDC_EDIT_FILE);
+    return !wFilePath.IsEmpty();
+  }
+}
+
+void CHashCalcDialog::UpdateButtonStates() {
+  // Don't update button states while calculating
+  if (m_bIsCalculating) {
+    return;
+  }
+  
+  bool hasAnyAlgorithm = HasAnyAlgorithmSelected();
+  bool hasAllAlgorithms = HasAllAlgorithmsSelected();
+  bool hasValidInput = HasValidInput();
+  
+  // Rule 1: Clear All button - disabled when no algorithm is selected
+  GetDlgItem(IDC_CLEAR_ALL).EnableWindow(hasAnyAlgorithm);
+  
+  // Rule 2: Select All button - disabled when all algorithms are selected
+  GetDlgItem(IDC_SELECT_ALL).EnableWindow(!hasAllAlgorithms);
+  
+  // Rule 3: Calculate button - disabled when no input, or no algorithm selected
+  GetDlgItem(IDC_BUTTON_CALCULATE).EnableWindow(hasValidInput && hasAnyAlgorithm);
 }

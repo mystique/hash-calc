@@ -20,6 +20,9 @@ protected:
   virtual INT_PTR DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
   virtual LRESULT OnNotify(WPARAM wparam, LPARAM lparam) override; // Added
   virtual void OnCancel() override;
+  
+  // For handling Enter key in edit boxes
+  virtual BOOL PreTranslateMessage(MSG& msg);
 
 private:
   void UpdateTabDisplay(); // Added
@@ -27,6 +30,10 @@ private:
   void DisableControlsForCalculation();
   void PerformHashCalculation();
   void ShowProgressBar(bool show);
+  void UpdateButtonStates(); // Added for control logic
+  bool HasAnyAlgorithmSelected(); // Check if any algorithm is selected
+  bool HasAllAlgorithmsSelected(); // Check if all algorithms are selected
+  bool HasValidInput(); // Check if input is valid
   static DWORD WINAPI CalculateHashThread(LPVOID lpParam);
 
 private:
@@ -38,6 +45,8 @@ private:
   void OnBrowse();
   void OnStayOnTop();
   void OnDropFiles(HDROP hDrop);
+  void OnFilePathEnter();
+  bool ValidateFilePath(const std::wstring& filePath, std::wstring& errorMsg);
 
   CFont m_fontResult;
   

@@ -30,14 +30,17 @@ static LRESULT CALLBACK HoverButtonProc(HWND hwnd, UINT msg, WPARAM wParam,
 
     BOOL isHovering = (BOOL)(intptr_t)GetProp(hwnd, PROP_HOVERING);
 
+    // Check if button is enabled
+    BOOL isEnabled = IsWindowEnabled(hwnd);
+
     // Get button state
     LRESULT state = CallWindowProc(oldProc, hwnd, BM_GETSTATE, 0, 0);
-    BOOL isPressed = (state & BST_PUSHED);
+    BOOL isPressed = (state & BST_PUSHED) && isEnabled;
 
     // Draw Edge based on state
     if (isPressed) {
       DrawEdge(hMemDC, &rect, BDR_SUNKENOUTER, BF_RECT);
-    } else if (isHovering) {
+    } else if (isHovering && isEnabled) {
       DrawEdge(hMemDC, &rect, BDR_RAISEDINNER, BF_RECT);
     }
     // else: completely borderless
@@ -51,7 +54,14 @@ static LRESULT CALLBACK HoverButtonProc(HWND hwnd, UINT msg, WPARAM wParam,
     HFONT hOldFont = (HFONT)SelectObject(hMemDC, hFont);
 
     SetBkMode(hMemDC, TRANSPARENT);
-    SetTextColor(hMemDC, GetSysColor(COLOR_BTNTEXT));
+    
+    // Set text color based on enabled state
+    if (isEnabled) {
+      SetTextColor(hMemDC, GetSysColor(COLOR_BTNTEXT));
+    } else {
+      // Use gray color for disabled text
+      SetTextColor(hMemDC, GetSysColor(COLOR_GRAYTEXT));
+    }
 
     // Offset text if pressed
     if (isPressed) {
