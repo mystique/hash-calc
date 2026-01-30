@@ -713,7 +713,7 @@ void CHashCalcDialog::PerformHashCalculation() {
         }
     };
 
-    // ========== Tab 1: SHA && MD (按界面从左到右顺序) ==========
+    // ========== Tab 1: SHA && MD (left to right order as shown in UI) ==========
     // SHA Family
     // User requested SHA-160 for SHA-1
     checkAndCompute(IDC_SHA_160, "SHA-1", "SHA-160");
@@ -736,7 +736,7 @@ void CHashCalcDialog::PerformHashCalculation() {
     checkAndCompute(IDC_MD6_384, "MD6-384", "MD6-384");
     checkAndCompute(IDC_MD6_512, "MD6-512", "MD6-512");
 
-    // ========== Tab 2: SHA-3 && Modern (按界面从左到右顺序) ==========
+    // ========== Tab 2: SHA-3 && Modern (left to right order as shown in UI) ==========
     // SHA-3
     checkAndCompute(IDC_SHA3_224, "SHA3-224", "SHA3-224");
     checkAndCompute(IDC_SHA3_256, "SHA3-256", "SHA3-256");
@@ -762,7 +762,7 @@ void CHashCalcDialog::PerformHashCalculation() {
     checkAndCompute(IDC_LSH_512, "LSH-512", "LSH-512");
     checkAndCompute(IDC_SM3, "SM3", "SM3");
 
-    // ========== Tab 3: HAVAL && RIPEMD (按界面从左到右顺序) ==========
+    // ========== Tab 3: HAVAL && RIPEMD (left to right order as shown in UI) ==========
     // HAVAL Family
     // Compute for each selected pass count
     auto checkAndComputeHaval = [&](int id, int bits, int passes) {
@@ -800,7 +800,7 @@ void CHashCalcDialog::PerformHashCalculation() {
     checkAndCompute(IDC_RIPEMD_256, "RIPEMD-256", "RIPEMD-256");
     checkAndCompute(IDC_RIPEMD_320, "RIPEMD-320", "RIPEMD-320");
 
-    // ========== Tab 4: Checksum && Others (按界面从左到右顺序) ==========
+    // ========== Tab 4: Checksum && Others (left to right order as shown in UI) ==========
     // Checksum
     checkAndCompute(IDC_CRC32, "CRC32", "CRC-32");
     checkAndCompute(IDC_ADLER32, "Adler32", "Adler-32");
@@ -915,7 +915,7 @@ void CHashCalcDialog::PerformHashCalculation() {
         }
     };
 
-    // ========== Tab 1: SHA && MD (按界面从左到右顺序) ==========
+    // ========== Tab 1: SHA && MD (left to right order as shown in UI) ==========
     // SHA Family
     checkAndCompute(IDC_SHA_160, "SHA-1", "SHA-160");
     checkAndCompute(IDC_SHA_224, "SHA-224", "SHA-224");
@@ -937,7 +937,7 @@ void CHashCalcDialog::PerformHashCalculation() {
     checkAndCompute(IDC_MD6_384, "MD6-384", "MD6-384");
     checkAndCompute(IDC_MD6_512, "MD6-512", "MD6-512");
 
-    // ========== Tab 2: SHA-3 && Modern (按界面从左到右顺序) ==========
+    // ========== Tab 2: SHA-3 && Modern (left to right order as shown in UI) ==========
     // SHA-3
     checkAndCompute(IDC_SHA3_224, "SHA3-224", "SHA3-224");
     checkAndCompute(IDC_SHA3_256, "SHA3-256", "SHA3-256");
@@ -963,7 +963,7 @@ void CHashCalcDialog::PerformHashCalculation() {
     checkAndCompute(IDC_LSH_512, "LSH-512", "LSH-512");
     checkAndCompute(IDC_SM3, "SM3", "SM3");
 
-    // ========== Tab 3: HAVAL && RIPEMD (按界面从左到右顺序) ==========
+    // ========== Tab 3: HAVAL && RIPEMD (left to right order as shown in UI) ==========
     // HAVAL Family
     // Compute for each selected pass count
     auto checkAndComputeHaval = [&](int id, int bits, int passes) {
@@ -1001,7 +1001,7 @@ void CHashCalcDialog::PerformHashCalculation() {
     checkAndCompute(IDC_RIPEMD_256, "RIPEMD-256", "RIPEMD-256");
     checkAndCompute(IDC_RIPEMD_320, "RIPEMD-320", "RIPEMD-320");
 
-    // ========== Tab 4: Checksum && Others (按界面从左到右顺序) ==========
+    // ========== Tab 4: Checksum && Others (left to right order as shown in UI) ==========
     // Checksum
     checkAndCompute(IDC_CRC32, "CRC32", "CRC-32");
     checkAndCompute(IDC_ADLER32, "Adler32", "Adler-32");
