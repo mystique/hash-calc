@@ -189,6 +189,7 @@ BOOL CHashCalcDialog::OnCommand(WPARAM wparam, LPARAM lparam) {
       IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
       IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
       IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32,
+      IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
       IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
       IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
       IDC_SHAKE_128, IDC_SHAKE_256,
@@ -274,26 +275,6 @@ INT_PTR CHashCalcDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return TRUE;
   }
   
-  if (uMsg == WM_CTLCOLORSTATIC) {
-    HDC hdc = (HDC)wParam;
-    HWND hwndCtl = (HWND)lParam;
-    
-    // Check if the control overlaps with the tab control
-    HWND hTab = GetDlgItem(IDC_TAB_MAIN);
-    if (hTab) {
-        RECT rcTab, rcCtl, rcInter;
-        ::GetWindowRect(hTab, &rcTab);
-        ::GetWindowRect(hwndCtl, &rcCtl);
-        
-        // If they intersect, assume the control is "on" the tab.
-        // We set the background to Transparent and return a White Brush 
-        // to match the tab's usually white background.
-        if (::IntersectRect(&rcInter, &rcTab, &rcCtl)) {
-            ::SetBkMode(hdc, TRANSPARENT);
-            return (INT_PTR)::GetStockObject(WHITE_BRUSH);
-        }
-    }
-  }
   return CDialog::DialogProc(uMsg, wParam, lParam);
 }
 
@@ -330,10 +311,11 @@ void CHashCalcDialog::UpdateTabDisplay() {
   }
 
   // Tab 0: SHA & MD
-  // Includes: SHA-1/2 group, MD group
+  // Includes: SHA-1/2 group, MD group, MD6 group
   int tab0[] = {
       IDC_GROUP_SHA, IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
-      IDC_GROUP_MD, IDC_MD2, IDC_MD4, IDC_MD5
+      IDC_GROUP_MD, IDC_MD2, IDC_MD4, IDC_MD5,
+      IDC_GROUP_MD6, IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512
   };
 
   // Tab 1: SHA-3 & Modern
@@ -443,6 +425,15 @@ void CHashCalcDialog::OnSelectAll() {
   CheckDlgButton(IDC_CRC32, BST_CHECKED);
   CheckDlgButton(IDC_ADLER32, BST_CHECKED);
 
+  // MD6
+  CheckDlgButton(IDC_MD6_128, BST_CHECKED);
+  CheckDlgButton(IDC_MD6_160, BST_CHECKED);
+  CheckDlgButton(IDC_MD6_192, BST_CHECKED);
+  CheckDlgButton(IDC_MD6_224, BST_CHECKED);
+  CheckDlgButton(IDC_MD6_256, BST_CHECKED);
+  CheckDlgButton(IDC_MD6_384, BST_CHECKED);
+  CheckDlgButton(IDC_MD6_512, BST_CHECKED);
+
   // SHA-3
   CheckDlgButton(IDC_SHA3_224, BST_CHECKED);
   CheckDlgButton(IDC_SHA3_256, BST_CHECKED);
@@ -505,6 +496,15 @@ void CHashCalcDialog::OnClearAll() {
   CheckDlgButton(IDC_MD5, BST_UNCHECKED);
   CheckDlgButton(IDC_CRC32, BST_UNCHECKED);
   CheckDlgButton(IDC_ADLER32, BST_UNCHECKED);
+
+  // MD6
+  CheckDlgButton(IDC_MD6_128, BST_UNCHECKED);
+  CheckDlgButton(IDC_MD6_160, BST_UNCHECKED);
+  CheckDlgButton(IDC_MD6_192, BST_UNCHECKED);
+  CheckDlgButton(IDC_MD6_224, BST_UNCHECKED);
+  CheckDlgButton(IDC_MD6_256, BST_UNCHECKED);
+  CheckDlgButton(IDC_MD6_384, BST_UNCHECKED);
+  CheckDlgButton(IDC_MD6_512, BST_UNCHECKED);
 
   // SHA-3
   CheckDlgButton(IDC_SHA3_224, BST_UNCHECKED);
@@ -589,6 +589,14 @@ void CHashCalcDialog::EnableControls(bool enable) {
   GetDlgItem(IDC_MD5).EnableWindow(enable);
   GetDlgItem(IDC_CRC32).EnableWindow(enable);
   GetDlgItem(IDC_ADLER32).EnableWindow(enable);
+  
+  GetDlgItem(IDC_MD6_128).EnableWindow(enable);
+  GetDlgItem(IDC_MD6_160).EnableWindow(enable);
+  GetDlgItem(IDC_MD6_192).EnableWindow(enable);
+  GetDlgItem(IDC_MD6_224).EnableWindow(enable);
+  GetDlgItem(IDC_MD6_256).EnableWindow(enable);
+  GetDlgItem(IDC_MD6_384).EnableWindow(enable);
+  GetDlgItem(IDC_MD6_512).EnableWindow(enable);
   
   GetDlgItem(IDC_SHA3_224).EnableWindow(enable);
   GetDlgItem(IDC_SHA3_256).EnableWindow(enable);
@@ -718,6 +726,15 @@ void CHashCalcDialog::PerformHashCalculation() {
     checkAndCompute(IDC_MD2, "MD2", "MD2");
     checkAndCompute(IDC_MD4, "MD4", "MD4");
     checkAndCompute(IDC_MD5, "MD5", "MD5");
+
+    // MD6 Family
+    checkAndCompute(IDC_MD6_128, "MD6-128", "MD6-128");
+    checkAndCompute(IDC_MD6_160, "MD6-160", "MD6-160");
+    checkAndCompute(IDC_MD6_192, "MD6-192", "MD6-192");
+    checkAndCompute(IDC_MD6_224, "MD6-224", "MD6-224");
+    checkAndCompute(IDC_MD6_256, "MD6-256", "MD6-256");
+    checkAndCompute(IDC_MD6_384, "MD6-384", "MD6-384");
+    checkAndCompute(IDC_MD6_512, "MD6-512", "MD6-512");
 
     // ========== Tab 2: SHA-3 && Modern (按界面从左到右顺序) ==========
     // SHA-3
@@ -910,6 +927,15 @@ void CHashCalcDialog::PerformHashCalculation() {
     checkAndCompute(IDC_MD2, "MD2", "MD2");
     checkAndCompute(IDC_MD4, "MD4", "MD4");
     checkAndCompute(IDC_MD5, "MD5", "MD5");
+
+    // MD6 Family
+    checkAndCompute(IDC_MD6_128, "MD6-128", "MD6-128");
+    checkAndCompute(IDC_MD6_160, "MD6-160", "MD6-160");
+    checkAndCompute(IDC_MD6_192, "MD6-192", "MD6-192");
+    checkAndCompute(IDC_MD6_224, "MD6-224", "MD6-224");
+    checkAndCompute(IDC_MD6_256, "MD6-256", "MD6-256");
+    checkAndCompute(IDC_MD6_384, "MD6-384", "MD6-384");
+    checkAndCompute(IDC_MD6_512, "MD6-512", "MD6-512");
 
     // ========== Tab 2: SHA-3 && Modern (按界面从左到右顺序) ==========
     // SHA-3
@@ -1294,6 +1320,7 @@ bool CHashCalcDialog::HasAnyAlgorithmSelected() {
     IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5,
     IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
     IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32,
+    IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
     IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
     IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
     IDC_SHAKE_128, IDC_SHAKE_256,
@@ -1318,6 +1345,7 @@ bool CHashCalcDialog::HasAllAlgorithmsSelected() {
     IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5,
     IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
     IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32,
+    IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
     IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
     IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
     IDC_SHAKE_128, IDC_SHAKE_256,
@@ -1354,7 +1382,8 @@ int CHashCalcDialog::CountSelectedAlgorithmsForTab(int tabIndex) {
   if (tabIndex == 0) {
     int tab0Algos[] = {
       IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
-      IDC_MD2, IDC_MD4, IDC_MD5
+      IDC_MD2, IDC_MD4, IDC_MD5,
+      IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512
     };
     for (int id : tab0Algos) {
       if (IsDlgButtonChecked(id)) {
@@ -1503,6 +1532,7 @@ void CHashCalcDialog::SaveConfiguration() {
   int allAlgorithmIds[] = {
     IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
     IDC_MD2, IDC_MD4, IDC_MD5,
+    IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
     IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
     IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
     IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,

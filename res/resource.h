@@ -116,4 +116,14 @@
 #define IDC_GROUP_KECCAK 1250
 #define IDC_GROUP_SHAKE 1251
 
+// MD6 Group
+#define IDC_GROUP_MD6 1260
+#define IDC_MD6_128 1261
+#define IDC_MD6_160 1262
+#define IDC_MD6_192 1263
+#define IDC_MD6_224 1264
+#define IDC_MD6_256 1265
+#define IDC_MD6_384 1266
+#define IDC_MD6_512 1267
+
 #endif // RESOURCE_H

@@ -87,6 +87,15 @@ std::wstring ConfigManager::GetAlgorithmName(int algorithmId)
         {IDC_MD4, L"MD4"},
         {IDC_MD5, L"MD5"},
         
+        // MD6 algorithms
+        {IDC_MD6_128, L"MD6-128"},
+        {IDC_MD6_160, L"MD6-160"},
+        {IDC_MD6_192, L"MD6-192"},
+        {IDC_MD6_224, L"MD6-224"},
+        {IDC_MD6_256, L"MD6-256"},
+        {IDC_MD6_384, L"MD6-384"},
+        {IDC_MD6_512, L"MD6-512"},
+        
         // SHA-3 algorithms
         {IDC_SHA3_224, L"SHA3-224"},
         {IDC_SHA3_256, L"SHA3-256"},
@@ -143,7 +152,10 @@ std::wstring ConfigManager::GetAlgorithmSection(int algorithmId)
     if (algorithmId >= IDC_SHA_160 && algorithmId <= IDC_SHA_512) {
         return L"Algorithms.SHA_MD";
     }
-    if (algorithmId >= IDC_MD2 && algorithmId <= IDC_MD5) {
+    if (algorithmId == IDC_MD2 || algorithmId == IDC_MD4 || algorithmId == IDC_MD5) {
+        return L"Algorithms.SHA_MD";
+    }
+    if (algorithmId >= IDC_MD6_128 && algorithmId <= IDC_MD6_512) {
         return L"Algorithms.SHA_MD";
     }
     
@@ -183,8 +195,8 @@ std::wstring ConfigManager::GetAlgorithmSection(int algorithmId)
         return L"Algorithms.Checksum_Others";
     }
     
-    // Fallback to old section name for compatibility
-    return L"Algorithms";
+    // Unknown algorithm ID
+    return L"";
 }
 
 int ConfigManager::GetAlgorithmIdFromName(const std::wstring& name)
@@ -199,6 +211,13 @@ int ConfigManager::GetAlgorithmIdFromName(const std::wstring& name)
         {L"MD2", IDC_MD2},
         {L"MD4", IDC_MD4},
         {L"MD5", IDC_MD5},
+        {L"MD6-128", IDC_MD6_128},
+        {L"MD6-160", IDC_MD6_160},
+        {L"MD6-192", IDC_MD6_192},
+        {L"MD6-224", IDC_MD6_224},
+        {L"MD6-256", IDC_MD6_256},
+        {L"MD6-384", IDC_MD6_384},
+        {L"MD6-512", IDC_MD6_512},
         {L"SHA3-224", IDC_SHA3_224},
         {L"SHA3-256", IDC_SHA3_256},
         {L"SHA3-384", IDC_SHA3_384},
@@ -260,6 +279,7 @@ bool ConfigManager::LoadConfig()
     int allAlgorithmIds[] = {
         IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
         IDC_MD2, IDC_MD4, IDC_MD5,
+        IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
         IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
         IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
         IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
@@ -275,14 +295,7 @@ bool ConfigManager::LoadConfig()
         std::wstring name = GetAlgorithmName(id);
         std::wstring section = GetAlgorithmSection(id);
         if (!name.empty()) {
-            // Try to read from new section structure first
             bool enabled = ReadIniInt(section, name, 0) == 1;
-            
-            // Fallback to old "Algorithms" section for backward compatibility
-            if (!enabled && section != L"Algorithms") {
-                enabled = ReadIniInt(L"Algorithms", name, 0) == 1;
-            }
-            
             m_algorithms[id] = enabled;
         }
     }
