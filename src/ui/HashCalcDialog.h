@@ -3,6 +3,7 @@
 
 #include "resource.h"
 #include "wxx_dialog.h"
+#include "../utils/ConfigManager.h"
 #include <atomic>
 
 // Custom message for hash calculation completion
@@ -26,6 +27,7 @@ protected:
 
 private:
   void UpdateTabDisplay(); // Added
+  int CountSelectedAlgorithmsForTab(int tabIndex); // Count selected algorithms for a specific tab
   void EnableControls(bool enable);
   void DisableControlsForCalculation();
   void PerformHashCalculation();
@@ -47,6 +49,10 @@ private:
   void OnDropFiles(HDROP hDrop);
   void OnFilePathEnter();
   bool ValidateFilePath(const std::wstring& filePath, std::wstring& errorMsg);
+  
+  // Configuration management
+  void LoadConfiguration();
+  void SaveConfiguration();
 
   CFont m_fontResult;
   
@@ -54,6 +60,9 @@ private:
   HANDLE m_hCalcThread;
   std::atomic<bool> m_bCancelCalculation;
   bool m_bIsCalculating;
+  
+  // Configuration manager
+  ConfigManager m_configManager;
 };
 
 #endif // HASH_CALC_DIALOG_H
