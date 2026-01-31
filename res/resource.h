@@ -77,6 +77,9 @@
 // Checksum Group
 #define IDC_CRC32 4001
 #define IDC_ADLER32 4002
+#define IDC_CRC16 4003
+#define IDC_CRC32C 4004
+#define IDC_CRC64 4005
 
 // Others Group (Tiger, Whirlpool)
 #define IDC_TIGER 4011

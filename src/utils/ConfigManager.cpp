@@ -116,7 +116,10 @@ std::wstring ConfigManager::GetAlgorithmName(int algorithmId)
         {IDC_RIPEMD_320, L"RIPEMD-320"},
         
         // Checksums
+        {IDC_CRC16, L"CRC16"},
         {IDC_CRC32, L"CRC32"},
+        {IDC_CRC32C, L"CRC32C"},
+        {IDC_CRC64, L"CRC64"},
         {IDC_ADLER32, L"ADLER32"},
         
         // Keccak
@@ -199,7 +202,10 @@ std::wstring ConfigManager::GetAlgorithmSection(int algorithmId)
             return L"Algorithms.HAVAL_RIPEMD";
         
         // Tab 4: Checksum & Others
+        case IDC_CRC16:
         case IDC_CRC32:
+        case IDC_CRC32C:
+        case IDC_CRC64:
         case IDC_ADLER32:
         case IDC_TIGER:
         case IDC_WHIRLPOOL:
@@ -242,7 +248,10 @@ int ConfigManager::GetAlgorithmIdFromName(const std::wstring& name)
         {L"RIPEMD-160", IDC_RIPEMD_160},
         {L"RIPEMD-256", IDC_RIPEMD_256},
         {L"RIPEMD-320", IDC_RIPEMD_320},
+        {L"CRC16", IDC_CRC16},
         {L"CRC32", IDC_CRC32},
+        {L"CRC32C", IDC_CRC32C},
+        {L"CRC64", IDC_CRC64},
         {L"ADLER32", IDC_ADLER32},
         {L"KECCAK-224", IDC_KECCAK_224},
         {L"KECCAK-256", IDC_KECCAK_256},
@@ -294,7 +303,7 @@ bool ConfigManager::LoadConfig()
         IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
         IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
         IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
-        IDC_CRC32, IDC_ADLER32,
+        IDC_CRC16, IDC_CRC32, IDC_CRC32C, IDC_CRC64, IDC_ADLER32,
         IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
         IDC_SHAKE_128, IDC_SHAKE_256,
         IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,

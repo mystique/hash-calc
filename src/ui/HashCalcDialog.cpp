@@ -199,7 +199,7 @@ BOOL CHashCalcDialog::OnCommand(WPARAM wparam, LPARAM lparam) {
       IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
       IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
       IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
-      IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32,
+      IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64,
       IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
       IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
       IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
@@ -354,7 +354,7 @@ void CHashCalcDialog::UpdateTabDisplay() {
   // Tab 3: Checksum & Others
   // Includes: Checksum group, Exotic/Misc group (Tiger, Whirlpool)
   int tab3[] = {
-      IDC_GROUP_CHECKSUM, IDC_CRC32, IDC_ADLER32,
+      IDC_GROUP_CHECKSUM, IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64,
       IDC_GROUP_MISC, IDC_TIGER, IDC_WHIRLPOOL
   };
 
@@ -415,6 +415,9 @@ void CHashCalcDialog::OnSelectAll() {
   CheckDlgButton(IDC_MD5, BST_CHECKED);
   CheckDlgButton(IDC_CRC32, BST_CHECKED);
   CheckDlgButton(IDC_ADLER32, BST_CHECKED);
+  CheckDlgButton(IDC_CRC16, BST_CHECKED);
+  CheckDlgButton(IDC_CRC32C, BST_CHECKED);
+  CheckDlgButton(IDC_CRC64, BST_CHECKED);
 
   // MD6
   CheckDlgButton(IDC_MD6_128, BST_CHECKED);
@@ -488,6 +491,9 @@ void CHashCalcDialog::OnClearAll() {
   CheckDlgButton(IDC_MD5, BST_UNCHECKED);
   CheckDlgButton(IDC_CRC32, BST_UNCHECKED);
   CheckDlgButton(IDC_ADLER32, BST_UNCHECKED);
+  CheckDlgButton(IDC_CRC16, BST_UNCHECKED);
+  CheckDlgButton(IDC_CRC32C, BST_UNCHECKED);
+  CheckDlgButton(IDC_CRC64, BST_UNCHECKED);
 
   // MD6
   CheckDlgButton(IDC_MD6_128, BST_UNCHECKED);
@@ -581,6 +587,9 @@ void CHashCalcDialog::EnableControls(bool enable) {
   GetDlgItem(IDC_MD5).EnableWindow(enable);
   GetDlgItem(IDC_CRC32).EnableWindow(enable);
   GetDlgItem(IDC_ADLER32).EnableWindow(enable);
+  GetDlgItem(IDC_CRC16).EnableWindow(enable);
+  GetDlgItem(IDC_CRC32C).EnableWindow(enable);
+  GetDlgItem(IDC_CRC64).EnableWindow(enable);
   
   GetDlgItem(IDC_MD6_128).EnableWindow(enable);
   GetDlgItem(IDC_MD6_160).EnableWindow(enable);
@@ -794,7 +803,10 @@ void CHashCalcDialog::PerformHashCalculation() {
 
     // ========== Tab 4: Checksum && Others (left to right order as shown in UI) ==========
     // Checksum
+    checkAndCompute(IDC_CRC16, "CRC-16", "CRC-16");
     checkAndCompute(IDC_CRC32, "CRC32", "CRC-32");
+    checkAndCompute(IDC_CRC32C, "CRC-32C", "CRC-32C");
+    checkAndCompute(IDC_CRC64, "CRC-64", "CRC-64");
     checkAndCompute(IDC_ADLER32, "Adler32", "Adler-32");
 
     // Others
@@ -995,7 +1007,10 @@ void CHashCalcDialog::PerformHashCalculation() {
 
     // ========== Tab 4: Checksum && Others (left to right order as shown in UI) ==========
     // Checksum
+    checkAndCompute(IDC_CRC16, "CRC-16", "CRC-16");
     checkAndCompute(IDC_CRC32, "CRC32", "CRC-32");
+    checkAndCompute(IDC_CRC32C, "CRC-32C", "CRC-32C");
+    checkAndCompute(IDC_CRC64, "CRC-64", "CRC-64");
     checkAndCompute(IDC_ADLER32, "Adler32", "Adler-32");
 
     // Others
@@ -1074,7 +1089,7 @@ void CHashCalcDialog::OnCalculate() {
     IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
     IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
     IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
-    IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32,
+    IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64,
     IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
     IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
     IDC_SHAKE_128, IDC_SHAKE_256,
@@ -1322,7 +1337,7 @@ bool CHashCalcDialog::HasAnyAlgorithmSelected() {
     IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
     IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5,
     IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
-    IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32,
+    IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64,
     IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
     IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
     IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
@@ -1347,7 +1362,7 @@ bool CHashCalcDialog::HasAllAlgorithmsSelected() {
     IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
     IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5,
     IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
-    IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32,
+    IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64,
     IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
     IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
     IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
@@ -1445,7 +1460,7 @@ int CHashCalcDialog::CountSelectedAlgorithmsForTab(int tabIndex) {
   // Tab 3: Checksum & Others
   else if (tabIndex == 3) {
     int tab3Algos[] = {
-      IDC_CRC32, IDC_ADLER32,
+      IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64,
       IDC_TIGER, IDC_WHIRLPOOL
     };
     for (int id : tab3Algos) {
@@ -1539,7 +1554,7 @@ void CHashCalcDialog::SaveConfiguration() {
     IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
     IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
     IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
-    IDC_CRC32, IDC_ADLER32,
+    IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64,
     IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
     IDC_SHAKE_128, IDC_SHAKE_256,
     IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
