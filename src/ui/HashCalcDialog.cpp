@@ -11,6 +11,9 @@
 #include <vector>
 #include <process.h>
 
+// Ensure COM is properly linked
+#pragma comment(lib, "ole32.lib")
+
 CHashCalcDialog::CHashCalcDialog() 
   : CDialog(IDD_MAIN_DIALOG), 
     m_hCalcThread(NULL), 
@@ -105,6 +108,14 @@ BOOL CHashCalcDialog::OnInitDialog() {
 
   // Initialize button states based on initial conditions
   UpdateButtonStates();
+
+  // Initialize taskbar progress (COM interface)
+  // CoInitialize should already be called by the application
+  HRESULT hr = CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER,
+                                 IID_PPV_ARGS(&m_pTaskbarList));
+  if (SUCCEEDED(hr) && m_pTaskbarList) {
+    m_pTaskbarList->HrInit();
+  }
 
   return TRUE;
 }
@@ -263,6 +274,9 @@ INT_PTR CHashCalcDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
     
     // Hide progress bar
     ShowProgressBar(false);
+    
+    // Clear taskbar progress
+    SetTaskbarProgress(TBPF_NOPROGRESS);
     
     // Update button states after calculation completes
     UpdateButtonStates();
@@ -1095,6 +1109,9 @@ void CHashCalcDialog::OnCalculate() {
   // Show progress bar
   ShowProgressBar(true);
   
+  // Set taskbar progress to indeterminate state
+  SetTaskbarProgress(TBPF_INDETERMINATE);
+  
   // Create calculation thread
   m_hCalcThread = CreateThread(
     NULL,
@@ -1112,6 +1129,8 @@ void CHashCalcDialog::OnCalculate() {
     SetDlgItemText(IDC_BUTTON_CALCULATE, L"Calculate");
     ::InvalidateRect(GetDlgItem(IDC_BUTTON_CALCULATE), NULL, TRUE);
     m_bIsCalculating = false;
+    ShowProgressBar(false);
+    SetTaskbarProgress(TBPF_NOPROGRESS);
   }
 }
 
@@ -1188,6 +1207,12 @@ void CHashCalcDialog::ShowProgressBar(bool show) {
   } else {
     ::SendMessage(hProgress, PBM_SETMARQUEE, FALSE, 0); // Stop marquee animation
     ::ShowWindow(hProgress, SW_HIDE);
+  }
+}
+
+void CHashCalcDialog::SetTaskbarProgress(TBPFLAG state) {
+  if (m_pTaskbarList) {
+    m_pTaskbarList->SetProgressState(*this, state);
   }
 }
 

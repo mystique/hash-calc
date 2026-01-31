@@ -5,6 +5,8 @@
 #include "wxx_dialog.h"
 #include "../utils/ConfigManager.h"
 #include <atomic>
+#include <shobjidl.h>
+#include <wrl/client.h>
 
 // Custom message for hash calculation completion
 #define WM_HASH_COMPLETE (WM_USER + 1)
@@ -33,6 +35,7 @@ private:
   void PerformHashCalculation();
   void ShowProgressBar(bool show);
   void UpdateButtonStates(); // Added for control logic
+  void SetTaskbarProgress(TBPFLAG state); // Set taskbar progress state
   bool HasAnyAlgorithmSelected(); // Check if any algorithm is selected
   bool HasAllAlgorithmsSelected(); // Check if all algorithms are selected
   bool HasValidInput(); // Check if input is valid
@@ -63,6 +66,9 @@ private:
   
   // Configuration manager
   ConfigManager m_configManager;
+  
+  // Taskbar progress
+  Microsoft::WRL::ComPtr<ITaskbarList3> m_pTaskbarList;
 };
 
 #endif // HASH_CALC_DIALOG_H
