@@ -319,13 +319,14 @@ void CHashCalcDialog::UpdateTabDisplay() {
   };
 
   // Tab 1: SHA-3 & Modern
-  // Includes: SHA-3 group, BLAKE group, LSH group, SM3 (in Exotic/Misc group originally, moving to groups)
+  // Includes: SHA-3 group, BLAKE group, LSH group, SM3
   int tab1[] = {
       IDC_GROUP_SHA3, IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
       IDC_GROUP_KECCAK, IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
       IDC_GROUP_SHAKE, IDC_SHAKE_128, IDC_SHAKE_256,
       IDC_GROUP_BLAKE, IDC_BLAKE2B, IDC_BLAKE2S,
-      IDC_GROUP_LSH, IDC_LSH_256, IDC_LSH_512
+      IDC_GROUP_LSH, IDC_LSH_256, IDC_LSH_512,
+      IDC_SM3
   };
 
   // Tab 2: HAVAL & RIPEMD
@@ -337,37 +338,11 @@ void CHashCalcDialog::UpdateTabDisplay() {
   };
 
   // Tab 3: Checksum & Others
-  // Includes: Checksum group, Exotic/Misc group (Tiger, Whirlpool, SM3 is moved to Modern but we can keep Misc group here sans SM3 or just keep the group structure)
-  // Let's put SM3 in Tab 1 (Modern) visually, but we need to handle the Group Box controls. 
-  // We will assume re-organization of Group Boxes in RC file.
+  // Includes: Checksum group, Exotic/Misc group (Tiger, Whirlpool)
   int tab3[] = {
       IDC_GROUP_CHECKSUM, IDC_CRC32, IDC_ADLER32,
-      IDC_GROUP_MISC, IDC_TIGER, IDC_WHIRLPOOL, IDC_SM3 
+      IDC_GROUP_MISC, IDC_TIGER, IDC_WHIRLPOOL
   };
-  
-  // Note: SM3 fits better in Modern, but if it shares a GroupBox with Tiger/Whirlpool in RC, 
-  // we might need to verify groupings. 
-  // For now, I'll display SM3 in Tab 1 (Modern) and Tiger/Whirlpool in Tab 3.
-  // This means IDC_GROUP_MISC might need to be shown in both or split?
-  // Easier: Move SM3 to a 'Modern' group or standalone in Tab 1.
-  // Actually, I will explicitly list SM3 in Tab 1 in this array, and remove from Tab 3 array if I want it there.
-  // BUT: The group box "Exotic" (IDC_GROUP_MISC) surrounds them.
-  // I will rely on the RC file update to split these or I'll just show the group box in Tab 3 
-  // and show SM3 in Tab 1 without a group box (or a new one).
-  // Plan: In RC, I'll move SM3 out of "Exotic" or rename "Exotic" to "Others".
-  // Let's put SM3 in Tab 1. Tiger & Whirlpool in Tab 3.
-
-  // Correcting lists based on intended RC changes:
-  
-  // Tab 1 (Add SM3)
-  std::vector<int> t1(tab1, tab1 + sizeof(tab1)/sizeof(int));
-  t1.push_back(IDC_SM3);
-
-  // Tab 3 (Remove SM3)
-  std::vector<int> t3;
-  t3.push_back(IDC_GROUP_CHECKSUM); t3.push_back(IDC_CRC32); 
-  t3.push_back(IDC_ADLER32);
-  t3.push_back(IDC_GROUP_MISC); t3.push_back(IDC_TIGER); t3.push_back(IDC_WHIRLPOOL);
 
   // Helper to apply show/hide
   auto apply = [&](const std::vector<int>& ids, bool show) {
@@ -378,7 +353,9 @@ void CHashCalcDialog::UpdateTabDisplay() {
   
   // Convert standard arrays to vectors for uniformity
   std::vector<int> t0(tab0, tab0 + sizeof(tab0)/sizeof(int));
+  std::vector<int> t1(tab1, tab1 + sizeof(tab1)/sizeof(int));
   std::vector<int> t2(tab2, tab2 + sizeof(tab2)/sizeof(int));
+  std::vector<int> t3(tab3, tab3 + sizeof(tab3)/sizeof(int));
 
   apply(t0, sel == 0);
   apply(t1, sel == 1);
@@ -448,6 +425,7 @@ void CHashCalcDialog::OnSelectAll() {
 
   // RIPEMD
   CheckDlgButton(IDC_RIPEMD_128, BST_CHECKED);
+  CheckDlgButton(IDC_RIPEMD_160, BST_CHECKED);
   CheckDlgButton(IDC_RIPEMD_256, BST_CHECKED);
   CheckDlgButton(IDC_RIPEMD_320, BST_CHECKED);
 

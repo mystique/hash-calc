@@ -148,55 +148,66 @@ std::wstring ConfigManager::GetAlgorithmName(int algorithmId)
 
 std::wstring ConfigManager::GetAlgorithmSection(int algorithmId)
 {
-    // Tab 1: SHA & MD
-    if (algorithmId >= IDC_SHA_160 && algorithmId <= IDC_SHA_512) {
-        return L"Algorithms.SHA_MD";
+    // Use explicit switch-case for all algorithm IDs to avoid range issues
+    switch (algorithmId) {
+        // Tab 1: SHA & MD
+        case IDC_SHA_160:
+        case IDC_SHA_224:
+        case IDC_SHA_256:
+        case IDC_SHA_384:
+        case IDC_SHA_512:
+        case IDC_MD2:
+        case IDC_MD4:
+        case IDC_MD5:
+        case IDC_MD6_128:
+        case IDC_MD6_160:
+        case IDC_MD6_192:
+        case IDC_MD6_224:
+        case IDC_MD6_256:
+        case IDC_MD6_384:
+        case IDC_MD6_512:
+            return L"Algorithms.SHA_MD";
+        
+        // Tab 2: SHA-3 & Modern
+        case IDC_SHA3_224:
+        case IDC_SHA3_256:
+        case IDC_SHA3_384:
+        case IDC_SHA3_512:
+        case IDC_KECCAK_224:
+        case IDC_KECCAK_256:
+        case IDC_KECCAK_384:
+        case IDC_KECCAK_512:
+        case IDC_SHAKE_128:
+        case IDC_SHAKE_256:
+        case IDC_BLAKE2B:
+        case IDC_BLAKE2S:
+        case IDC_LSH_256:
+        case IDC_SM3:
+        case IDC_LSH_512:
+            return L"Algorithms.SHA3_Modern";
+        
+        // Tab 3: HAVAL & RIPEMD
+        case IDC_HAVAL_128:
+        case IDC_HAVAL_160:
+        case IDC_HAVAL_192:
+        case IDC_HAVAL_224:
+        case IDC_HAVAL_256:
+        case IDC_RIPEMD_128:
+        case IDC_RIPEMD_160:
+        case IDC_RIPEMD_256:
+        case IDC_RIPEMD_320:
+            return L"Algorithms.HAVAL_RIPEMD";
+        
+        // Tab 4: Checksum & Others
+        case IDC_CRC32:
+        case IDC_ADLER32:
+        case IDC_TIGER:
+        case IDC_WHIRLPOOL:
+            return L"Algorithms.Checksum_Others";
+        
+        default:
+            return L"";
     }
-    if (algorithmId == IDC_MD2 || algorithmId == IDC_MD4 || algorithmId == IDC_MD5) {
-        return L"Algorithms.SHA_MD";
-    }
-    if (algorithmId >= IDC_MD6_128 && algorithmId <= IDC_MD6_512) {
-        return L"Algorithms.SHA_MD";
-    }
-    
-    // Tab 2: SHA-3 & Modern
-    if (algorithmId >= IDC_SHA3_224 && algorithmId <= IDC_SHA3_512) {
-        return L"Algorithms.SHA3_Modern";
-    }
-    if (algorithmId >= IDC_KECCAK_224 && algorithmId <= IDC_KECCAK_512) {
-        return L"Algorithms.SHA3_Modern";
-    }
-    if (algorithmId >= IDC_SHAKE_128 && algorithmId <= IDC_SHAKE_256) {
-        return L"Algorithms.SHA3_Modern";
-    }
-    if (algorithmId == IDC_BLAKE2B || algorithmId == IDC_BLAKE2S) {
-        return L"Algorithms.SHA3_Modern";
-    }
-    if (algorithmId == IDC_LSH_256 || algorithmId == IDC_LSH_512) {
-        return L"Algorithms.SHA3_Modern";
-    }
-    if (algorithmId == IDC_SM3) {
-        return L"Algorithms.SHA3_Modern";
-    }
-    
-    // Tab 3: HAVAL & RIPEMD
-    if (algorithmId >= IDC_HAVAL_128 && algorithmId <= IDC_HAVAL_256) {
-        return L"Algorithms.HAVAL_RIPEMD";
-    }
-    if (algorithmId >= IDC_RIPEMD_128 && algorithmId <= IDC_RIPEMD_320) {
-        return L"Algorithms.HAVAL_RIPEMD";
-    }
-    
-    // Tab 4: Checksum & Others
-    if (algorithmId == IDC_CRC32 || algorithmId == IDC_ADLER32) {
-        return L"Algorithms.Checksum_Others";
-    }
-    if (algorithmId == IDC_TIGER || algorithmId == IDC_WHIRLPOOL) {
-        return L"Algorithms.Checksum_Others";
-    }
-    
-    // Unknown algorithm ID
-    return L"";
 }
 
 int ConfigManager::GetAlgorithmIdFromName(const std::wstring& name)

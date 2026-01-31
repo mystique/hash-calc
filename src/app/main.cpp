@@ -1,6 +1,5 @@
 #include "ui/HashCalcDialog.h"
 
-// Application class
 class CHashCalcApp : public Win32xx::CWinApp {
 public:
   CHashCalcApp() = default;
@@ -17,7 +16,7 @@ private:
   CHashCalcDialog m_dialog;
 };
 
-// Entry point
+// Windows application entry point
 int WINAPI wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int) {
   CHashCalcApp app;
   return app.Run();
