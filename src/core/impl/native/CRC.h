@@ -1,7 +1,7 @@
 #ifndef CRC_H
 #define CRC_H
 
-#include "CryptoppHashBase.h"
+#include "../cryptopp/CryptoppHashBase.h"
 #include <cryptopp/cryptlib.h>
 #include <cryptopp/secblock.h>
 #include <array>

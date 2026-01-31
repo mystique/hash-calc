@@ -1,7 +1,7 @@
 #ifndef MD6_H_CRYPTOPP
 #define MD6_H_CRYPTOPP
 
-#include "CryptoppHashBase.h"
+#include "../cryptopp/CryptoppHashBase.h"
 #include <cryptopp/cryptlib.h>
 #include <cryptopp/secblock.h>
 #include <cryptopp/misc.h>

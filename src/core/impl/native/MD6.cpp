@@ -1,5 +1,5 @@
 #include "MD6.h"
-#include "../HashAlgorithmFactory.h"
+#include "../../HashAlgorithmFactory.h"
 #include <algorithm>
 #include <cstring>
 

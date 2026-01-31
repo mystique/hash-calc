@@ -1,7 +1,7 @@
 #ifndef HAVAL_H
 #define HAVAL_H
 
-#include "CryptoppHashBase.h"
+#include "../cryptopp/CryptoppHashBase.h"
 #include <cryptopp/cryptlib.h>
 #include <cryptopp/secblock.h>
 #include <cryptopp/misc.h>

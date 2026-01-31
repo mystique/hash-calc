@@ -1,7 +1,7 @@
 #ifndef CRYPTOPP_HASH_BASE_H
 #define CRYPTOPP_HASH_BASE_H
 
-#include "../IHashAlgorithm.h"
+#include "../../IHashAlgorithm.h"
 #include <cryptopp/cryptlib.h>
 #include <memory>
 

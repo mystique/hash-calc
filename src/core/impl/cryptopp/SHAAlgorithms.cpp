@@ -1,5 +1,5 @@
 #include "SHAAlgorithms.h"
-#include "../HashAlgorithmFactory.h"
+#include "../../HashAlgorithmFactory.h"
 
 namespace core {
 namespace impl {

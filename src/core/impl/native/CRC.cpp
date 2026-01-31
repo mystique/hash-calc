@@ -1,5 +1,5 @@
 #include "CRC.h"
-#include "../HashAlgorithmFactory.h"
+#include "../../HashAlgorithmFactory.h"
 #include <cryptopp/misc.h>
 #include <cstring>
 
