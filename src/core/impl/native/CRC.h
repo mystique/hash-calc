@@ -11,6 +11,41 @@ namespace core {
 namespace impl {
 
 /**
+ * @brief CRC-8 implementation (CRC-8/CCITT variant)
+ * Polynomial: 0x07
+ * Initial value: 0x00
+ * No final XOR, no reflection
+ */
+class CRC8 : public CryptoPP::HashTransformation {
+public:
+    CRYPTOPP_CONSTANT(DIGESTSIZE = 1);  // 8 bits = 1 byte
+    CRYPTOPP_CONSTANT(BLOCKSIZE = 1);
+
+    CRC8() { Restart(); }
+
+    std::string AlgorithmName() const override {
+        return "CRC-8";
+    }
+
+    static std::string StaticAlgorithmName() {
+        return "CRC-8";
+    }
+
+    unsigned int DigestSize() const override { return DIGESTSIZE; }
+    unsigned int BlockSize() const override { return BLOCKSIZE; }
+
+    void Update(const CryptoPP::byte *input, size_t length) override;
+    void TruncatedFinal(CryptoPP::byte *digest, size_t digestSize) override;
+    void Restart() override;
+
+private:
+    void InitTable();
+    uint8_t m_crc;
+    std::array<uint8_t, 256> m_table;
+    bool m_tableInitialized;
+};
+
+/**
  * @brief CRC-16 implementation (CRC-16/CCITT-FALSE variant)
  * Polynomial: 0x1021
  * Initial value: 0xFFFF

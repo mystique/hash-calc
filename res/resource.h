@@ -80,6 +80,7 @@
 #define IDC_CRC16 4003
 #define IDC_CRC32C 4004
 #define IDC_CRC64 4005
+#define IDC_CRC8 4006
 
 // Others Group (Tiger, Whirlpool)
 #define IDC_TIGER 4011

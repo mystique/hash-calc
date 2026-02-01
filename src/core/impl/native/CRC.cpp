@@ -7,6 +7,51 @@ namespace core {
 namespace impl {
 
 // ============================================================================
+// CRC-8 Implementation
+// ============================================================================
+
+void CRC8::InitTable() {
+    if (m_tableInitialized) return;
+
+    const uint8_t polynomial = 0x07; // CRC-8/CCITT polynomial
+
+    for (uint32_t i = 0; i < 256; ++i) {
+        uint8_t crc = static_cast<uint8_t>(i);
+        for (int j = 0; j < 8; ++j) {
+            if (crc & 0x80) {
+                crc = (crc << 1) ^ polynomial;
+            } else {
+                crc = crc << 1;
+            }
+        }
+        m_table[i] = crc;
+    }
+
+    m_tableInitialized = true;
+}
+
+void CRC8::Restart() {
+    InitTable();
+    m_crc = 0x00; // Initial value for CRC-8/CCITT
+}
+
+void CRC8::Update(const CryptoPP::byte *input, size_t length) {
+    for (size_t i = 0; i < length; ++i) {
+        uint8_t index = m_crc ^ input[i];
+        m_crc = m_table[index];
+    }
+}
+
+void CRC8::TruncatedFinal(CryptoPP::byte *digest, size_t digestSize) {
+    ThrowIfInvalidTruncatedSize(digestSize);
+
+    // No final XOR for this variant
+    digest[0] = static_cast<CryptoPP::byte>(m_crc);
+
+    Restart();
+}
+
+// ============================================================================
 // CRC-16 Implementation
 // ============================================================================
 
@@ -161,6 +206,7 @@ void CRC64::TruncatedFinal(CryptoPP::byte *digest, size_t digestSize) {
 // Algorithm Registration
 // ============================================================================
 
+static HashAlgorithmRegistrar<CRCWrapper<CRC8>> reg_crc8("CRC-8");
 static HashAlgorithmRegistrar<CRCWrapper<CRC16>> reg_crc16("CRC-16");
 static HashAlgorithmRegistrar<CRCWrapper<CRC32C>> reg_crc32c("CRC-32C");
 static HashAlgorithmRegistrar<CRCWrapper<CRC64>> reg_crc64("CRC-64");
