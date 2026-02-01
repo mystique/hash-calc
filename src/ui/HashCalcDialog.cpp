@@ -14,6 +14,23 @@
 // Ensure COM is properly linked
 #pragma comment(lib, "ole32.lib")
 
+// Static algorithm ID list definition
+const int CHashCalcDialog::s_allAlgorithmIds[] = {
+  IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
+  IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
+  IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
+  IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64, IDC_CRC8,
+  IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
+  IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
+  IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
+  IDC_SHAKE_128, IDC_SHAKE_256,
+  IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
+  IDC_BLAKE2B, IDC_BLAKE2S,
+  IDC_LSH_256, IDC_LSH_512
+};
+
+const size_t CHashCalcDialog::s_allAlgorithmCount = sizeof(s_allAlgorithmIds) / sizeof(int);
+
 CHashCalcDialog::CHashCalcDialog() 
   : CDialog(IDD_MAIN_DIALOG), 
     m_hCalcThread(NULL), 
@@ -393,72 +410,11 @@ void CHashCalcDialog::OnExit() {
 
 void CHashCalcDialog::OnSelectAll() {
   // Check all hash algorithm checkboxes
-  CheckDlgButton(IDC_SHA_160, BST_CHECKED);
-  CheckDlgButton(IDC_SHA_224, BST_CHECKED);
-  CheckDlgButton(IDC_SHA_256, BST_CHECKED);
-  CheckDlgButton(IDC_SHA_384, BST_CHECKED);
-  CheckDlgButton(IDC_SHA_512, BST_CHECKED);
-
-  CheckDlgButton(IDC_HAVAL_128, BST_CHECKED);
-  CheckDlgButton(IDC_HAVAL_160, BST_CHECKED);
-  CheckDlgButton(IDC_HAVAL_192, BST_CHECKED);
-  CheckDlgButton(IDC_HAVAL_224, BST_CHECKED);
-  CheckDlgButton(IDC_HAVAL_256, BST_CHECKED);
-
-  CheckDlgButton(IDC_HAVAL_PASS3, BST_CHECKED);
-  CheckDlgButton(IDC_HAVAL_PASS4, BST_CHECKED);
-  CheckDlgButton(IDC_HAVAL_PASS5, BST_CHECKED);
-
-  CheckDlgButton(IDC_RIPEMD_160, BST_CHECKED);
-  CheckDlgButton(IDC_MD2, BST_CHECKED);
-  CheckDlgButton(IDC_MD4, BST_CHECKED);
-  CheckDlgButton(IDC_MD5, BST_CHECKED);
-  CheckDlgButton(IDC_CRC32, BST_CHECKED);
-  CheckDlgButton(IDC_ADLER32, BST_CHECKED);
-  CheckDlgButton(IDC_CRC16, BST_CHECKED);
-  CheckDlgButton(IDC_CRC32C, BST_CHECKED);
-  CheckDlgButton(IDC_CRC64, BST_CHECKED);
-  CheckDlgButton(IDC_CRC8, BST_CHECKED);
-
-  // MD6
-  CheckDlgButton(IDC_MD6_128, BST_CHECKED);
-  CheckDlgButton(IDC_MD6_160, BST_CHECKED);
-  CheckDlgButton(IDC_MD6_192, BST_CHECKED);
-  CheckDlgButton(IDC_MD6_224, BST_CHECKED);
-  CheckDlgButton(IDC_MD6_256, BST_CHECKED);
-  CheckDlgButton(IDC_MD6_384, BST_CHECKED);
-  CheckDlgButton(IDC_MD6_512, BST_CHECKED);
-
-  // SHA-3
-  CheckDlgButton(IDC_SHA3_224, BST_CHECKED);
-  CheckDlgButton(IDC_SHA3_256, BST_CHECKED);
-  CheckDlgButton(IDC_SHA3_384, BST_CHECKED);
-  CheckDlgButton(IDC_SHA3_512, BST_CHECKED);
-  CheckDlgButton(IDC_KECCAK_224, BST_CHECKED);
-  CheckDlgButton(IDC_KECCAK_256, BST_CHECKED);
-  CheckDlgButton(IDC_KECCAK_384, BST_CHECKED);
-  CheckDlgButton(IDC_KECCAK_512, BST_CHECKED);
-  CheckDlgButton(IDC_SHAKE_128, BST_CHECKED);
-  CheckDlgButton(IDC_SHAKE_256, BST_CHECKED);
-
-  // RIPEMD
-  CheckDlgButton(IDC_RIPEMD_128, BST_CHECKED);
-  CheckDlgButton(IDC_RIPEMD_160, BST_CHECKED);
-  CheckDlgButton(IDC_RIPEMD_256, BST_CHECKED);
-  CheckDlgButton(IDC_RIPEMD_320, BST_CHECKED);
-
-  // Misc
-  CheckDlgButton(IDC_TIGER, BST_CHECKED);
-  CheckDlgButton(IDC_SM3, BST_CHECKED);
-  CheckDlgButton(IDC_WHIRLPOOL, BST_CHECKED);
-
-  // BLAKE
-  CheckDlgButton(IDC_BLAKE2B, BST_CHECKED);
-  CheckDlgButton(IDC_BLAKE2S, BST_CHECKED);
-
-  // LSH
-  CheckDlgButton(IDC_LSH_256, BST_CHECKED);
-  CheckDlgButton(IDC_LSH_512, BST_CHECKED);
+  SetCheckboxStates(s_allAlgorithmIds, s_allAlgorithmCount, true);
+  
+  // HAVAL pass selections
+  const int havalPassIds[] = {IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5};
+  SetCheckboxStates(havalPassIds, 3, true);
   
   // Update button states after selection
   UpdateButtonStates();
@@ -470,71 +426,11 @@ void CHashCalcDialog::OnSelectAll() {
 
 void CHashCalcDialog::OnClearAll() {
   // Uncheck all hash algorithm checkboxes
-  CheckDlgButton(IDC_SHA_160, BST_UNCHECKED);
-  CheckDlgButton(IDC_SHA_224, BST_UNCHECKED);
-  CheckDlgButton(IDC_SHA_256, BST_UNCHECKED);
-  CheckDlgButton(IDC_SHA_384, BST_UNCHECKED);
-  CheckDlgButton(IDC_SHA_512, BST_UNCHECKED);
-
-  CheckDlgButton(IDC_HAVAL_128, BST_UNCHECKED);
-  CheckDlgButton(IDC_HAVAL_160, BST_UNCHECKED);
-  CheckDlgButton(IDC_HAVAL_192, BST_UNCHECKED);
-  CheckDlgButton(IDC_HAVAL_224, BST_UNCHECKED);
-  CheckDlgButton(IDC_HAVAL_256, BST_UNCHECKED);
-
-  CheckDlgButton(IDC_HAVAL_PASS3, BST_UNCHECKED);
-  CheckDlgButton(IDC_HAVAL_PASS4, BST_UNCHECKED);
-  CheckDlgButton(IDC_HAVAL_PASS5, BST_UNCHECKED);
-
-  CheckDlgButton(IDC_RIPEMD_160, BST_UNCHECKED);
-  CheckDlgButton(IDC_MD2, BST_UNCHECKED);
-  CheckDlgButton(IDC_MD4, BST_UNCHECKED);
-  CheckDlgButton(IDC_MD5, BST_UNCHECKED);
-  CheckDlgButton(IDC_CRC32, BST_UNCHECKED);
-  CheckDlgButton(IDC_ADLER32, BST_UNCHECKED);
-  CheckDlgButton(IDC_CRC16, BST_UNCHECKED);
-  CheckDlgButton(IDC_CRC32C, BST_UNCHECKED);
-  CheckDlgButton(IDC_CRC64, BST_UNCHECKED);
-  CheckDlgButton(IDC_CRC8, BST_UNCHECKED);
-
-  // MD6
-  CheckDlgButton(IDC_MD6_128, BST_UNCHECKED);
-  CheckDlgButton(IDC_MD6_160, BST_UNCHECKED);
-  CheckDlgButton(IDC_MD6_192, BST_UNCHECKED);
-  CheckDlgButton(IDC_MD6_224, BST_UNCHECKED);
-  CheckDlgButton(IDC_MD6_256, BST_UNCHECKED);
-  CheckDlgButton(IDC_MD6_384, BST_UNCHECKED);
-  CheckDlgButton(IDC_MD6_512, BST_UNCHECKED);
-
-  // SHA-3
-  CheckDlgButton(IDC_SHA3_224, BST_UNCHECKED);
-  CheckDlgButton(IDC_SHA3_256, BST_UNCHECKED);
-  CheckDlgButton(IDC_SHA3_384, BST_UNCHECKED);
-  CheckDlgButton(IDC_SHA3_512, BST_UNCHECKED);
-  CheckDlgButton(IDC_KECCAK_224, BST_UNCHECKED);
-  CheckDlgButton(IDC_KECCAK_256, BST_UNCHECKED);
-  CheckDlgButton(IDC_KECCAK_384, BST_UNCHECKED);
-  CheckDlgButton(IDC_KECCAK_512, BST_UNCHECKED);
-  CheckDlgButton(IDC_SHAKE_128, BST_UNCHECKED);
-  CheckDlgButton(IDC_SHAKE_256, BST_UNCHECKED);
-
-  // RIPEMD
-  CheckDlgButton(IDC_RIPEMD_128, BST_UNCHECKED);
-  CheckDlgButton(IDC_RIPEMD_256, BST_UNCHECKED);
-  CheckDlgButton(IDC_RIPEMD_320, BST_UNCHECKED);
-
-  // Misc
-  CheckDlgButton(IDC_TIGER, BST_UNCHECKED);
-  CheckDlgButton(IDC_SM3, BST_UNCHECKED);
-  CheckDlgButton(IDC_WHIRLPOOL, BST_UNCHECKED);
-
-  // BLAKE
-  CheckDlgButton(IDC_BLAKE2B, BST_UNCHECKED);
-  CheckDlgButton(IDC_BLAKE2S, BST_UNCHECKED);
-
-  // LSH
-  CheckDlgButton(IDC_LSH_256, BST_UNCHECKED);
-  CheckDlgButton(IDC_LSH_512, BST_UNCHECKED);
+  SetCheckboxStates(s_allAlgorithmIds, s_allAlgorithmCount, false);
+  
+  // HAVAL pass selections
+  const int havalPassIds[] = {IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5};
+  SetCheckboxStates(havalPassIds, 3, false);
   
   // Update button states after clearing
   UpdateButtonStates();
@@ -563,65 +459,12 @@ void CHashCalcDialog::EnableControls(bool enable) {
     GetDlgItem(IDC_BUTTON_BROWSE).EnableWindow(FALSE);
   }
   
-  // Enable/disable all algorithm checkboxes
-  GetDlgItem(IDC_SHA_160).EnableWindow(enable);
-  GetDlgItem(IDC_SHA_224).EnableWindow(enable);
-  GetDlgItem(IDC_SHA_256).EnableWindow(enable);
-  GetDlgItem(IDC_SHA_384).EnableWindow(enable);
-  GetDlgItem(IDC_SHA_512).EnableWindow(enable);
+  // Enable/disable all algorithm checkboxes using the refactored helper
+  EnableControlsById(s_allAlgorithmIds, s_allAlgorithmCount, enable);
   
-  GetDlgItem(IDC_HAVAL_128).EnableWindow(enable);
-  GetDlgItem(IDC_HAVAL_160).EnableWindow(enable);
-  GetDlgItem(IDC_HAVAL_192).EnableWindow(enable);
-  GetDlgItem(IDC_HAVAL_224).EnableWindow(enable);
-  GetDlgItem(IDC_HAVAL_256).EnableWindow(enable);
-  GetDlgItem(IDC_HAVAL_PASS3).EnableWindow(enable);
-  GetDlgItem(IDC_HAVAL_PASS4).EnableWindow(enable);
-  GetDlgItem(IDC_HAVAL_PASS5).EnableWindow(enable);
-  
-  GetDlgItem(IDC_RIPEMD_128).EnableWindow(enable);
-  GetDlgItem(IDC_RIPEMD_160).EnableWindow(enable);
-  GetDlgItem(IDC_RIPEMD_256).EnableWindow(enable);
-  GetDlgItem(IDC_RIPEMD_320).EnableWindow(enable);
-  
-  GetDlgItem(IDC_MD2).EnableWindow(enable);
-  GetDlgItem(IDC_MD4).EnableWindow(enable);
-  GetDlgItem(IDC_MD5).EnableWindow(enable);
-  GetDlgItem(IDC_CRC32).EnableWindow(enable);
-  GetDlgItem(IDC_ADLER32).EnableWindow(enable);
-  GetDlgItem(IDC_CRC16).EnableWindow(enable);
-  GetDlgItem(IDC_CRC32C).EnableWindow(enable);
-  GetDlgItem(IDC_CRC64).EnableWindow(enable);
-  GetDlgItem(IDC_CRC8).EnableWindow(enable);
-  
-  GetDlgItem(IDC_MD6_128).EnableWindow(enable);
-  GetDlgItem(IDC_MD6_160).EnableWindow(enable);
-  GetDlgItem(IDC_MD6_192).EnableWindow(enable);
-  GetDlgItem(IDC_MD6_224).EnableWindow(enable);
-  GetDlgItem(IDC_MD6_256).EnableWindow(enable);
-  GetDlgItem(IDC_MD6_384).EnableWindow(enable);
-  GetDlgItem(IDC_MD6_512).EnableWindow(enable);
-  
-  GetDlgItem(IDC_SHA3_224).EnableWindow(enable);
-  GetDlgItem(IDC_SHA3_256).EnableWindow(enable);
-  GetDlgItem(IDC_SHA3_384).EnableWindow(enable);
-  GetDlgItem(IDC_SHA3_512).EnableWindow(enable);
-  GetDlgItem(IDC_KECCAK_224).EnableWindow(enable);
-  GetDlgItem(IDC_KECCAK_256).EnableWindow(enable);
-  GetDlgItem(IDC_KECCAK_384).EnableWindow(enable);
-  GetDlgItem(IDC_KECCAK_512).EnableWindow(enable);
-  GetDlgItem(IDC_SHAKE_128).EnableWindow(enable);
-  GetDlgItem(IDC_SHAKE_256).EnableWindow(enable);
-  
-  GetDlgItem(IDC_TIGER).EnableWindow(enable);
-  GetDlgItem(IDC_SM3).EnableWindow(enable);
-  GetDlgItem(IDC_WHIRLPOOL).EnableWindow(enable);
-  
-  GetDlgItem(IDC_BLAKE2B).EnableWindow(enable);
-  GetDlgItem(IDC_BLAKE2S).EnableWindow(enable);
-  
-  GetDlgItem(IDC_LSH_256).EnableWindow(enable);
-  GetDlgItem(IDC_LSH_512).EnableWindow(enable);
+  // HAVAL pass selections
+  const int havalPassIds[] = {IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5};
+  EnableControlsById(havalPassIds, 3, enable);
   
   // Enable/disable Select All and Clear All buttons
   GetDlgItem(IDC_SELECT_ALL).EnableWindow(enable);
@@ -663,7 +506,6 @@ void CHashCalcDialog::PerformHashCalculation() {
                         NULL, NULL);
 
     std::wstringstream output;
-
     auto start_time = std::chrono::high_resolution_clock::now();
 
     output << L"Calculating hash of " << inputData.size() << L" bytes string `" << wstr << L"`...\r\n\r\n";
@@ -671,161 +513,18 @@ void CHashCalcDialog::PerformHashCalculation() {
     bool anyComputed = false;
 
     try {
-    // Helper to compute a specific algorithm by name
-    auto computeAlgo = [&](const std::string &algoName, const std::string &displayName) {
-      // Check for cancellation
+      // Use the refactored method for text mode
+      ComputeHashAlgorithmsForText(output, anyComputed, inputData);
+
+      auto end_time = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> elapsed = end_time - start_time;
+
+      // Check if cancelled
       if (m_bCancelCalculation.load()) {
-        return;
+        output << L"\r\n\r\nCalculation cancelled by user.";
+      } else {
+        output << L"\r\nCalculation took " << std::fixed << std::setprecision(3) << elapsed.count() << L" seconds";
       }
-      
-      try {
-        if (core::HashAlgorithmFactory::isAvailable(algoName)) {
-          auto algo = core::HashAlgorithmFactory::create(algoName);
-          // Set cancel callback
-          algo->setCancelCallback([this]() { return m_bCancelCalculation.load(); });
-          auto digest = algo->computeString(inputData);
-          
-          // Format: Algorithm Name (padded) : Hash Value
-          std::wstring wDisplayName(displayName.begin(), displayName.end());
-          
-          output << std::left << std::setw(12) << wDisplayName << L": " 
-                 << core::IHashAlgorithm::toHexWString(digest, true) << L"\r\n";
-          anyComputed = true;
-        } else {
-             // For unavailable algorithms, we might want to skip or show not available.
-             // Given the format, skipping might be cleaner or showing "N/A"
-             // checkAndCompute logic decides if we call this.
-             // If user selected it, we should probably show it.
-             std::wstring wDisplayName(displayName.begin(), displayName.end());
-             output << std::left << std::setw(12) << wDisplayName << L": Not Available\r\n";
-        }
-      } catch (const std::exception &e) {
-             std::string errorMsg = e.what();
-             // Check if this is a cancellation
-             if (errorMsg.find("cancelled") != std::string::npos) {
-               throw; // Re-throw to stop all calculations
-             }
-             std::wstring wDisplayName(displayName.begin(), displayName.end());
-             output << std::left << std::setw(12) << wDisplayName << L": Error\r\n";
-      }
-    };
-
-    // Helper to check ID and compute
-    auto checkAndCompute = [&](int id, const std::string &algoName, const std::string& displayName) {
-        if (IsDlgButtonChecked(id)) {
-            computeAlgo(algoName, displayName);
-        }
-    };
-
-    // ========== Tab 1: SHA && MD (left to right order as shown in UI) ==========
-    // SHA Family
-    // User requested SHA-160 for SHA-1
-    checkAndCompute(IDC_SHA_160, "SHA-1", "SHA-160");
-    checkAndCompute(IDC_SHA_224, "SHA-224", "SHA-224");
-    checkAndCompute(IDC_SHA_256, "SHA-256", "SHA-256");
-    checkAndCompute(IDC_SHA_384, "SHA-384", "SHA-384");
-    checkAndCompute(IDC_SHA_512, "SHA-512", "SHA-512");
-
-    // MD Family
-    checkAndCompute(IDC_MD2, "MD2", "MD2");
-    checkAndCompute(IDC_MD4, "MD4", "MD4");
-    checkAndCompute(IDC_MD5, "MD5", "MD5");
-
-    // MD6 Family
-    checkAndCompute(IDC_MD6_128, "MD6-128", "MD6-128");
-    checkAndCompute(IDC_MD6_160, "MD6-160", "MD6-160");
-    checkAndCompute(IDC_MD6_192, "MD6-192", "MD6-192");
-    checkAndCompute(IDC_MD6_224, "MD6-224", "MD6-224");
-    checkAndCompute(IDC_MD6_256, "MD6-256", "MD6-256");
-    checkAndCompute(IDC_MD6_384, "MD6-384", "MD6-384");
-    checkAndCompute(IDC_MD6_512, "MD6-512", "MD6-512");
-
-    // ========== Tab 2: SHA-3 && Modern (left to right order as shown in UI) ==========
-    // SHA-3
-    checkAndCompute(IDC_SHA3_224, "SHA3-224", "SHA3-224");
-    checkAndCompute(IDC_SHA3_256, "SHA3-256", "SHA3-256");
-    checkAndCompute(IDC_SHA3_384, "SHA3-384", "SHA3-384");
-    checkAndCompute(IDC_SHA3_512, "SHA3-512", "SHA3-512");
-
-    // Keccak
-    checkAndCompute(IDC_KECCAK_224, "Keccak-224", "Keccak-224");
-    checkAndCompute(IDC_KECCAK_256, "Keccak-256", "Keccak-256");
-    checkAndCompute(IDC_KECCAK_384, "Keccak-384", "Keccak-384");
-    checkAndCompute(IDC_KECCAK_512, "Keccak-512", "Keccak-512");
-
-    // SHAKE
-    checkAndCompute(IDC_SHAKE_128, "SHAKE128", "SHAKE-128");
-    checkAndCompute(IDC_SHAKE_256, "SHAKE256", "SHAKE-256");
-
-    // BLAKE2
-    checkAndCompute(IDC_BLAKE2B, "BLAKE2b", "BLAKE2b");
-    checkAndCompute(IDC_BLAKE2S, "BLAKE2s", "BLAKE2s");
-
-    // Asian (LSH and SM3)
-    checkAndCompute(IDC_LSH_256, "LSH-256", "LSH-256");
-    checkAndCompute(IDC_LSH_512, "LSH-512", "LSH-512");
-    checkAndCompute(IDC_SM3, "SM3", "SM3");
-
-    // ========== Tab 3: HAVAL && RIPEMD (left to right order as shown in UI) ==========
-    // HAVAL Family
-    // Compute for each selected pass count
-    auto checkAndComputeHaval = [&](int id, int bits, int passes) {
-        if (IsDlgButtonChecked(id)) {
-            std::stringstream algoName, displayName;
-            algoName << "HAVAL-" << bits << "/Pass" << passes;
-            displayName << "HAVAL-" << bits << "/" << passes;
-            computeAlgo(algoName.str(), displayName.str());
-        }
-    };
-
-    // Check which passes are selected and compute for each
-    std::vector<int> selectedPasses;
-    if (IsDlgButtonChecked(IDC_HAVAL_PASS3)) selectedPasses.push_back(3);
-    if (IsDlgButtonChecked(IDC_HAVAL_PASS4)) selectedPasses.push_back(4);
-    if (IsDlgButtonChecked(IDC_HAVAL_PASS5)) selectedPasses.push_back(5);
-    
-    // If no pass is selected, default to 3-pass
-    if (selectedPasses.empty()) {
-        selectedPasses.push_back(3);
-    }
-
-    // Compute HAVAL for each selected bit size and pass combination
-    for (int passes : selectedPasses) {
-        checkAndComputeHaval(IDC_HAVAL_128, 128, passes);
-        checkAndComputeHaval(IDC_HAVAL_160, 160, passes);
-        checkAndComputeHaval(IDC_HAVAL_192, 192, passes);
-        checkAndComputeHaval(IDC_HAVAL_224, 224, passes);
-        checkAndComputeHaval(IDC_HAVAL_256, 256, passes);
-    }
-
-    // RIPEMD
-    checkAndCompute(IDC_RIPEMD_128, "RIPEMD-128", "RIPEMD-128");
-    checkAndCompute(IDC_RIPEMD_160, "RIPEMD-160", "RIPEMD-160");
-    checkAndCompute(IDC_RIPEMD_256, "RIPEMD-256", "RIPEMD-256");
-    checkAndCompute(IDC_RIPEMD_320, "RIPEMD-320", "RIPEMD-320");
-
-    // ========== Tab 4: Checksum && Others (left to right order as shown in UI) ==========
-    // Checksum
-    checkAndCompute(IDC_CRC8, "CRC-8", "CRC-8");
-    checkAndCompute(IDC_CRC16, "CRC-16", "CRC-16");
-    checkAndCompute(IDC_CRC32, "CRC32", "CRC-32");
-    checkAndCompute(IDC_CRC32C, "CRC-32C", "CRC-32C");
-    checkAndCompute(IDC_CRC64, "CRC-64", "CRC-64");
-    checkAndCompute(IDC_ADLER32, "Adler32", "Adler-32");
-
-    // Others
-    checkAndCompute(IDC_TIGER, "Tiger", "Tiger");
-    checkAndCompute(IDC_WHIRLPOOL, "Whirlpool", "Whirlpool");
-
-    auto end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end_time - start_time;
-
-    // Check if cancelled
-    if (m_bCancelCalculation.load()) {
-      output << L"\r\n\r\nCalculation cancelled by user.";
-    } else {
-      output << L"\r\nCalculation took " << std::fixed << std::setprecision(3) << elapsed.count() << L" seconds";
-    }
 
     } catch (const std::exception &e) {
       // Cancellation or other error occurred
@@ -862,7 +561,6 @@ void CHashCalcDialog::PerformHashCalculation() {
     }
 
     std::wstringstream output;
-
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // Extract just the filename from full path
@@ -878,159 +576,18 @@ void CHashCalcDialog::PerformHashCalculation() {
     bool anyComputed = false;
 
     try {
-    // Helper to compute a specific algorithm by name for file
-    auto computeAlgo = [&](const std::string &algoName, const std::string &displayName) {
-      // Check for cancellation
+      // Use the refactored method for file mode
+      ComputeHashAlgorithmsForFile(output, anyComputed, filePath);
+
+      auto end_time = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> elapsed = end_time - start_time;
+
+      // Check if cancelled
       if (m_bCancelCalculation.load()) {
-        return;
+        output << L"\r\n\r\nCalculation cancelled by user.";
+      } else {
+        output << L"\r\nCalculation took " << std::fixed << std::setprecision(3) << elapsed.count() << L" seconds";
       }
-      
-      try {
-        if (core::HashAlgorithmFactory::isAvailable(algoName)) {
-          auto algo = core::HashAlgorithmFactory::create(algoName);
-          // Set cancel callback
-          algo->setCancelCallback([this]() { return m_bCancelCalculation.load(); });
-          auto digest = algo->computeFile(filePath);
-          
-          // Format: Algorithm Name (padded) : Hash Value
-          std::wstring wDisplayName(displayName.begin(), displayName.end());
-          
-          output << std::left << std::setw(12) << wDisplayName << L": " 
-                 << core::IHashAlgorithm::toHexWString(digest, true) << L"\r\n";
-          anyComputed = true;
-        } else {
-             // For unavailable algorithms, show "Not Available"
-             std::wstring wDisplayName(displayName.begin(), displayName.end());
-             output << std::left << std::setw(12) << wDisplayName << L": Not Available\r\n";
-        }
-      } catch (const std::exception &e) {
-             std::string errorMsg = e.what();
-             // Check if this is a cancellation
-             if (errorMsg.find("cancelled") != std::string::npos) {
-               throw; // Re-throw to stop all calculations
-             }
-             std::wstring wDisplayName(displayName.begin(), displayName.end());
-             std::string error = e.what();
-             std::wstring wError(error.begin(), error.end());
-             output << std::left << std::setw(12) << wDisplayName << L": Error - " << wError << L"\r\n";
-      }
-    };
-
-    // Helper to check ID and compute
-    auto checkAndCompute = [&](int id, const std::string &algoName, const std::string& displayName) {
-        if (IsDlgButtonChecked(id)) {
-            computeAlgo(algoName, displayName);
-        }
-    };
-
-    // ========== Tab 1: SHA && MD (left to right order as shown in UI) ==========
-    // SHA Family
-    checkAndCompute(IDC_SHA_160, "SHA-1", "SHA-160");
-    checkAndCompute(IDC_SHA_224, "SHA-224", "SHA-224");
-    checkAndCompute(IDC_SHA_256, "SHA-256", "SHA-256");
-    checkAndCompute(IDC_SHA_384, "SHA-384", "SHA-384");
-    checkAndCompute(IDC_SHA_512, "SHA-512", "SHA-512");
-
-    // MD Family
-    checkAndCompute(IDC_MD2, "MD2", "MD2");
-    checkAndCompute(IDC_MD4, "MD4", "MD4");
-    checkAndCompute(IDC_MD5, "MD5", "MD5");
-
-    // MD6 Family
-    checkAndCompute(IDC_MD6_128, "MD6-128", "MD6-128");
-    checkAndCompute(IDC_MD6_160, "MD6-160", "MD6-160");
-    checkAndCompute(IDC_MD6_192, "MD6-192", "MD6-192");
-    checkAndCompute(IDC_MD6_224, "MD6-224", "MD6-224");
-    checkAndCompute(IDC_MD6_256, "MD6-256", "MD6-256");
-    checkAndCompute(IDC_MD6_384, "MD6-384", "MD6-384");
-    checkAndCompute(IDC_MD6_512, "MD6-512", "MD6-512");
-
-    // ========== Tab 2: SHA-3 && Modern (left to right order as shown in UI) ==========
-    // SHA-3
-    checkAndCompute(IDC_SHA3_224, "SHA3-224", "SHA3-224");
-    checkAndCompute(IDC_SHA3_256, "SHA3-256", "SHA3-256");
-    checkAndCompute(IDC_SHA3_384, "SHA3-384", "SHA3-384");
-    checkAndCompute(IDC_SHA3_512, "SHA3-512", "SHA3-512");
-
-    // Keccak
-    checkAndCompute(IDC_KECCAK_224, "Keccak-224", "Keccak-224");
-    checkAndCompute(IDC_KECCAK_256, "Keccak-256", "Keccak-256");
-    checkAndCompute(IDC_KECCAK_384, "Keccak-384", "Keccak-384");
-    checkAndCompute(IDC_KECCAK_512, "Keccak-512", "Keccak-512");
-
-    // SHAKE
-    checkAndCompute(IDC_SHAKE_128, "SHAKE128", "SHAKE-128");
-    checkAndCompute(IDC_SHAKE_256, "SHAKE256", "SHAKE-256");
-
-    // BLAKE2
-    checkAndCompute(IDC_BLAKE2B, "BLAKE2b", "BLAKE2b");
-    checkAndCompute(IDC_BLAKE2S, "BLAKE2s", "BLAKE2s");
-
-    // Asian (LSH and SM3)
-    checkAndCompute(IDC_LSH_256, "LSH-256", "LSH-256");
-    checkAndCompute(IDC_LSH_512, "LSH-512", "LSH-512");
-    checkAndCompute(IDC_SM3, "SM3", "SM3");
-
-    // ========== Tab 3: HAVAL && RIPEMD (left to right order as shown in UI) ==========
-    // HAVAL Family
-    // Compute for each selected pass count
-    auto checkAndComputeHaval = [&](int id, int bits, int passes) {
-        if (IsDlgButtonChecked(id)) {
-            std::stringstream algoName, displayName;
-            algoName << "HAVAL-" << bits << "/Pass" << passes;
-            displayName << "HAVAL-" << bits << "/" << passes;
-            computeAlgo(algoName.str(), displayName.str());
-        }
-    };
-
-    // Check which passes are selected and compute for each
-    std::vector<int> selectedPasses;
-    if (IsDlgButtonChecked(IDC_HAVAL_PASS3)) selectedPasses.push_back(3);
-    if (IsDlgButtonChecked(IDC_HAVAL_PASS4)) selectedPasses.push_back(4);
-    if (IsDlgButtonChecked(IDC_HAVAL_PASS5)) selectedPasses.push_back(5);
-    
-    // If no pass is selected, default to 3-pass
-    if (selectedPasses.empty()) {
-        selectedPasses.push_back(3);
-    }
-
-    // Compute HAVAL for each selected bit size and pass combination
-    for (int passes : selectedPasses) {
-        checkAndComputeHaval(IDC_HAVAL_128, 128, passes);
-        checkAndComputeHaval(IDC_HAVAL_160, 160, passes);
-        checkAndComputeHaval(IDC_HAVAL_192, 192, passes);
-        checkAndComputeHaval(IDC_HAVAL_224, 224, passes);
-        checkAndComputeHaval(IDC_HAVAL_256, 256, passes);
-    }
-
-    // RIPEMD
-    checkAndCompute(IDC_RIPEMD_128, "RIPEMD-128", "RIPEMD-128");
-    checkAndCompute(IDC_RIPEMD_160, "RIPEMD-160", "RIPEMD-160");
-    checkAndCompute(IDC_RIPEMD_256, "RIPEMD-256", "RIPEMD-256");
-    checkAndCompute(IDC_RIPEMD_320, "RIPEMD-320", "RIPEMD-320");
-
-    // ========== Tab 4: Checksum && Others (left to right order as shown in UI) ==========
-    // Checksum
-    checkAndCompute(IDC_CRC8, "CRC-8", "CRC-8");
-    checkAndCompute(IDC_CRC16, "CRC-16", "CRC-16");
-    checkAndCompute(IDC_CRC32, "CRC32", "CRC-32");
-    checkAndCompute(IDC_CRC32C, "CRC-32C", "CRC-32C");
-    checkAndCompute(IDC_CRC64, "CRC-64", "CRC-64");
-    checkAndCompute(IDC_ADLER32, "Adler32", "Adler-32");
-
-    // Others
-    checkAndCompute(IDC_TIGER, "Tiger", "Tiger");
-    checkAndCompute(IDC_WHIRLPOOL, "Whirlpool", "Whirlpool");
-
-    auto end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end_time - start_time;
-
-    // Check if cancelled
-    if (m_bCancelCalculation.load()) {
-      output << L"\r\n\r\nCalculation cancelled by user.";
-    } else {
-      output << L"\r\nCalculation took " << std::fixed << std::setprecision(3) << elapsed.count() << L" seconds";
-    }
 
     } catch (const std::exception &e) {
       // Cancellation or other error occurred
@@ -1581,3 +1138,327 @@ void CHashCalcDialog::SaveConfiguration() {
   m_configManager.SaveConfig();
 }
 
+// ============================================================================
+// Refactored Helper Methods
+// ============================================================================
+
+void CHashCalcDialog::SetCheckboxStates(const int* ids, size_t count, bool checked) {
+  int state = checked ? BST_CHECKED : BST_UNCHECKED;
+  for (size_t i = 0; i < count; ++i) {
+    CheckDlgButton(ids[i], state);
+  }
+}
+
+void CHashCalcDialog::EnableControlsById(const int* ids, size_t count, bool enable) {
+  for (size_t i = 0; i < count; ++i) {
+    GetDlgItem(ids[i]).EnableWindow(enable);
+  }
+}
+
+void CHashCalcDialog::ComputeHashAlgorithmsForText(
+    std::wstringstream& output, 
+    bool& anyComputed,
+    const std::string& inputData) {
+  
+  // Helper to compute a specific algorithm by name
+  auto computeAlgo = [&](const std::string &algoName, const std::string &displayName) {
+    // Check for cancellation
+    if (m_bCancelCalculation.load()) {
+      return;
+    }
+    
+    try {
+      if (core::HashAlgorithmFactory::isAvailable(algoName)) {
+        auto algo = core::HashAlgorithmFactory::create(algoName);
+        // Set cancel callback
+        algo->setCancelCallback([this]() { return m_bCancelCalculation.load(); });
+        auto digest = algo->computeString(inputData);
+        
+        // Format: Algorithm Name (padded) : Hash Value
+        std::wstring wDisplayName(displayName.begin(), displayName.end());
+        
+        output << std::left << std::setw(12) << wDisplayName << L": " 
+               << core::IHashAlgorithm::toHexWString(digest, true) << L"\r\n";
+        anyComputed = true;
+      } else {
+        // For unavailable algorithms, show "Not Available"
+        std::wstring wDisplayName(displayName.begin(), displayName.end());
+        output << std::left << std::setw(12) << wDisplayName << L": Not Available\r\n";
+      }
+    } catch (const std::exception &e) {
+      std::string errorMsg = e.what();
+      // Check if this is a cancellation
+      if (errorMsg.find("cancelled") != std::string::npos) {
+        throw; // Re-throw to stop all calculations
+      }
+      std::wstring wDisplayName(displayName.begin(), displayName.end());
+      std::string error = e.what();
+      std::wstring wError(error.begin(), error.end());
+      output << std::left << std::setw(12) << wDisplayName << L": Error";
+      if (!wError.empty()) {
+        output << L" - " << wError;
+      }
+      output << L"\r\n";
+    }
+  };
+
+  // Helper to check ID and compute
+  auto checkAndCompute = [&](int id, const std::string &algoName, const std::string& displayName) {
+    if (IsDlgButtonChecked(id)) {
+      computeAlgo(algoName, displayName);
+    }
+  };
+
+  // ========== Tab 1: SHA && MD (left to right order as shown in UI) ==========
+  // SHA Family
+  checkAndCompute(IDC_SHA_160, "SHA-1", "SHA-160");
+  checkAndCompute(IDC_SHA_224, "SHA-224", "SHA-224");
+  checkAndCompute(IDC_SHA_256, "SHA-256", "SHA-256");
+  checkAndCompute(IDC_SHA_384, "SHA-384", "SHA-384");
+  checkAndCompute(IDC_SHA_512, "SHA-512", "SHA-512");
+
+  // MD Family
+  checkAndCompute(IDC_MD2, "MD2", "MD2");
+  checkAndCompute(IDC_MD4, "MD4", "MD4");
+  checkAndCompute(IDC_MD5, "MD5", "MD5");
+
+  // MD6 Family
+  checkAndCompute(IDC_MD6_128, "MD6-128", "MD6-128");
+  checkAndCompute(IDC_MD6_160, "MD6-160", "MD6-160");
+  checkAndCompute(IDC_MD6_192, "MD6-192", "MD6-192");
+  checkAndCompute(IDC_MD6_224, "MD6-224", "MD6-224");
+  checkAndCompute(IDC_MD6_256, "MD6-256", "MD6-256");
+  checkAndCompute(IDC_MD6_384, "MD6-384", "MD6-384");
+  checkAndCompute(IDC_MD6_512, "MD6-512", "MD6-512");
+
+  // ========== Tab 2: SHA-3 && Modern (left to right order as shown in UI) ==========
+  // SHA-3
+  checkAndCompute(IDC_SHA3_224, "SHA3-224", "SHA3-224");
+  checkAndCompute(IDC_SHA3_256, "SHA3-256", "SHA3-256");
+  checkAndCompute(IDC_SHA3_384, "SHA3-384", "SHA3-384");
+  checkAndCompute(IDC_SHA3_512, "SHA3-512", "SHA3-512");
+
+  // Keccak
+  checkAndCompute(IDC_KECCAK_224, "Keccak-224", "Keccak-224");
+  checkAndCompute(IDC_KECCAK_256, "Keccak-256", "Keccak-256");
+  checkAndCompute(IDC_KECCAK_384, "Keccak-384", "Keccak-384");
+  checkAndCompute(IDC_KECCAK_512, "Keccak-512", "Keccak-512");
+
+  // SHAKE
+  checkAndCompute(IDC_SHAKE_128, "SHAKE128", "SHAKE-128");
+  checkAndCompute(IDC_SHAKE_256, "SHAKE256", "SHAKE-256");
+
+  // BLAKE2
+  checkAndCompute(IDC_BLAKE2B, "BLAKE2b", "BLAKE2b");
+  checkAndCompute(IDC_BLAKE2S, "BLAKE2s", "BLAKE2s");
+
+  // Asian (LSH and SM3)
+  checkAndCompute(IDC_LSH_256, "LSH-256", "LSH-256");
+  checkAndCompute(IDC_LSH_512, "LSH-512", "LSH-512");
+  checkAndCompute(IDC_SM3, "SM3", "SM3");
+
+  // ========== Tab 3: HAVAL && RIPEMD (left to right order as shown in UI) ==========
+  // HAVAL Family
+  // Compute for each selected pass count
+  auto checkAndComputeHaval = [&](int id, int bits, int passes) {
+    if (IsDlgButtonChecked(id)) {
+      std::stringstream algoName, displayName;
+      algoName << "HAVAL-" << bits << "/Pass" << passes;
+      displayName << "HAVAL-" << bits << "/" << passes;
+      computeAlgo(algoName.str(), displayName.str());
+    }
+  };
+
+  // Check which passes are selected and compute for each
+  std::vector<int> selectedPasses;
+  if (IsDlgButtonChecked(IDC_HAVAL_PASS3)) selectedPasses.push_back(3);
+  if (IsDlgButtonChecked(IDC_HAVAL_PASS4)) selectedPasses.push_back(4);
+  if (IsDlgButtonChecked(IDC_HAVAL_PASS5)) selectedPasses.push_back(5);
+  
+  // If no pass is selected, default to 3-pass
+  if (selectedPasses.empty()) {
+    selectedPasses.push_back(3);
+  }
+
+  // Compute HAVAL for each selected bit size and pass combination
+  for (int passes : selectedPasses) {
+    checkAndComputeHaval(IDC_HAVAL_128, 128, passes);
+    checkAndComputeHaval(IDC_HAVAL_160, 160, passes);
+    checkAndComputeHaval(IDC_HAVAL_192, 192, passes);
+    checkAndComputeHaval(IDC_HAVAL_224, 224, passes);
+    checkAndComputeHaval(IDC_HAVAL_256, 256, passes);
+  }
+
+  // RIPEMD
+  checkAndCompute(IDC_RIPEMD_128, "RIPEMD-128", "RIPEMD-128");
+  checkAndCompute(IDC_RIPEMD_160, "RIPEMD-160", "RIPEMD-160");
+  checkAndCompute(IDC_RIPEMD_256, "RIPEMD-256", "RIPEMD-256");
+  checkAndCompute(IDC_RIPEMD_320, "RIPEMD-320", "RIPEMD-320");
+
+  // ========== Tab 4: Checksum && Others (left to right order as shown in UI) ==========
+  // Checksum
+  checkAndCompute(IDC_CRC8, "CRC-8", "CRC-8");
+  checkAndCompute(IDC_CRC16, "CRC-16", "CRC-16");
+  checkAndCompute(IDC_CRC32, "CRC32", "CRC-32");
+  checkAndCompute(IDC_CRC32C, "CRC-32C", "CRC-32C");
+  checkAndCompute(IDC_CRC64, "CRC-64", "CRC-64");
+  checkAndCompute(IDC_ADLER32, "Adler32", "Adler-32");
+
+  // Others
+  checkAndCompute(IDC_TIGER, "Tiger", "Tiger");
+  checkAndCompute(IDC_WHIRLPOOL, "Whirlpool", "Whirlpool");
+}
+
+void CHashCalcDialog::ComputeHashAlgorithmsForFile(
+    std::wstringstream& output, 
+    bool& anyComputed,
+    const std::wstring& filePath) {
+  
+  // Helper to compute a specific algorithm by name for file
+  auto computeAlgo = [&](const std::string &algoName, const std::string &displayName) {
+    // Check for cancellation
+    if (m_bCancelCalculation.load()) {
+      return;
+    }
+    
+    try {
+      if (core::HashAlgorithmFactory::isAvailable(algoName)) {
+        auto algo = core::HashAlgorithmFactory::create(algoName);
+        // Set cancel callback
+        algo->setCancelCallback([this]() { return m_bCancelCalculation.load(); });
+        auto digest = algo->computeFile(filePath);
+        
+        // Format: Algorithm Name (padded) : Hash Value
+        std::wstring wDisplayName(displayName.begin(), displayName.end());
+        
+        output << std::left << std::setw(12) << wDisplayName << L": " 
+               << core::IHashAlgorithm::toHexWString(digest, true) << L"\r\n";
+        anyComputed = true;
+      } else {
+        // For unavailable algorithms, show "Not Available"
+        std::wstring wDisplayName(displayName.begin(), displayName.end());
+        output << std::left << std::setw(12) << wDisplayName << L": Not Available\r\n";
+      }
+    } catch (const std::exception &e) {
+      std::string errorMsg = e.what();
+      // Check if this is a cancellation
+      if (errorMsg.find("cancelled") != std::string::npos) {
+        throw; // Re-throw to stop all calculations
+      }
+      std::wstring wDisplayName(displayName.begin(), displayName.end());
+      std::string error = e.what();
+      std::wstring wError(error.begin(), error.end());
+      output << std::left << std::setw(12) << wDisplayName << L": Error";
+      if (!wError.empty()) {
+        output << L" - " << wError;
+      }
+      output << L"\r\n";
+    }
+  };
+
+  // Helper to check ID and compute
+  auto checkAndCompute = [&](int id, const std::string &algoName, const std::string& displayName) {
+    if (IsDlgButtonChecked(id)) {
+      computeAlgo(algoName, displayName);
+    }
+  };
+
+  // ========== Tab 1: SHA && MD (left to right order as shown in UI) ==========
+  // SHA Family
+  checkAndCompute(IDC_SHA_160, "SHA-1", "SHA-160");
+  checkAndCompute(IDC_SHA_224, "SHA-224", "SHA-224");
+  checkAndCompute(IDC_SHA_256, "SHA-256", "SHA-256");
+  checkAndCompute(IDC_SHA_384, "SHA-384", "SHA-384");
+  checkAndCompute(IDC_SHA_512, "SHA-512", "SHA-512");
+
+  // MD Family
+  checkAndCompute(IDC_MD2, "MD2", "MD2");
+  checkAndCompute(IDC_MD4, "MD4", "MD4");
+  checkAndCompute(IDC_MD5, "MD5", "MD5");
+
+  // MD6 Family
+  checkAndCompute(IDC_MD6_128, "MD6-128", "MD6-128");
+  checkAndCompute(IDC_MD6_160, "MD6-160", "MD6-160");
+  checkAndCompute(IDC_MD6_192, "MD6-192", "MD6-192");
+  checkAndCompute(IDC_MD6_224, "MD6-224", "MD6-224");
+  checkAndCompute(IDC_MD6_256, "MD6-256", "MD6-256");
+  checkAndCompute(IDC_MD6_384, "MD6-384", "MD6-384");
+  checkAndCompute(IDC_MD6_512, "MD6-512", "MD6-512");
+
+  // ========== Tab 2: SHA-3 && Modern (left to right order as shown in UI) ==========
+  // SHA-3
+  checkAndCompute(IDC_SHA3_224, "SHA3-224", "SHA3-224");
+  checkAndCompute(IDC_SHA3_256, "SHA3-256", "SHA3-256");
+  checkAndCompute(IDC_SHA3_384, "SHA3-384", "SHA3-384");
+  checkAndCompute(IDC_SHA3_512, "SHA3-512", "SHA3-512");
+
+  // Keccak
+  checkAndCompute(IDC_KECCAK_224, "Keccak-224", "Keccak-224");
+  checkAndCompute(IDC_KECCAK_256, "Keccak-256", "Keccak-256");
+  checkAndCompute(IDC_KECCAK_384, "Keccak-384", "Keccak-384");
+  checkAndCompute(IDC_KECCAK_512, "Keccak-512", "Keccak-512");
+
+  // SHAKE
+  checkAndCompute(IDC_SHAKE_128, "SHAKE128", "SHAKE-128");
+  checkAndCompute(IDC_SHAKE_256, "SHAKE256", "SHAKE-256");
+
+  // BLAKE2
+  checkAndCompute(IDC_BLAKE2B, "BLAKE2b", "BLAKE2b");
+  checkAndCompute(IDC_BLAKE2S, "BLAKE2s", "BLAKE2s");
+
+  // Asian (LSH and SM3)
+  checkAndCompute(IDC_LSH_256, "LSH-256", "LSH-256");
+  checkAndCompute(IDC_LSH_512, "LSH-512", "LSH-512");
+  checkAndCompute(IDC_SM3, "SM3", "SM3");
+
+  // ========== Tab 3: HAVAL && RIPEMD (left to right order as shown in UI) ==========
+  // HAVAL Family
+  // Compute for each selected pass count
+  auto checkAndComputeHaval = [&](int id, int bits, int passes) {
+    if (IsDlgButtonChecked(id)) {
+      std::stringstream algoName, displayName;
+      algoName << "HAVAL-" << bits << "/Pass" << passes;
+      displayName << "HAVAL-" << bits << "/" << passes;
+      computeAlgo(algoName.str(), displayName.str());
+    }
+  };
+
+  // Check which passes are selected and compute for each
+  std::vector<int> selectedPasses;
+  if (IsDlgButtonChecked(IDC_HAVAL_PASS3)) selectedPasses.push_back(3);
+  if (IsDlgButtonChecked(IDC_HAVAL_PASS4)) selectedPasses.push_back(4);
+  if (IsDlgButtonChecked(IDC_HAVAL_PASS5)) selectedPasses.push_back(5);
+  
+  // If no pass is selected, default to 3-pass
+  if (selectedPasses.empty()) {
+    selectedPasses.push_back(3);
+  }
+
+  // Compute HAVAL for each selected bit size and pass combination
+  for (int passes : selectedPasses) {
+    checkAndComputeHaval(IDC_HAVAL_128, 128, passes);
+    checkAndComputeHaval(IDC_HAVAL_160, 160, passes);
+    checkAndComputeHaval(IDC_HAVAL_192, 192, passes);
+    checkAndComputeHaval(IDC_HAVAL_224, 224, passes);
+    checkAndComputeHaval(IDC_HAVAL_256, 256, passes);
+  }
+
+  // RIPEMD
+  checkAndCompute(IDC_RIPEMD_128, "RIPEMD-128", "RIPEMD-128");
+  checkAndCompute(IDC_RIPEMD_160, "RIPEMD-160", "RIPEMD-160");
+  checkAndCompute(IDC_RIPEMD_256, "RIPEMD-256", "RIPEMD-256");
+  checkAndCompute(IDC_RIPEMD_320, "RIPEMD-320", "RIPEMD-320");
+
+  // ========== Tab 4: Checksum && Others (left to right order as shown in UI) ==========
+  // Checksum
+  checkAndCompute(IDC_CRC8, "CRC-8", "CRC-8");
+  checkAndCompute(IDC_CRC16, "CRC-16", "CRC-16");
+  checkAndCompute(IDC_CRC32, "CRC32", "CRC-32");
+  checkAndCompute(IDC_CRC32C, "CRC-32C", "CRC-32C");
+  checkAndCompute(IDC_CRC64, "CRC-64", "CRC-64");
+  checkAndCompute(IDC_ADLER32, "Adler32", "Adler-32");
+
+  // Others
+  checkAndCompute(IDC_TIGER, "Tiger", "Tiger");
+  checkAndCompute(IDC_WHIRLPOOL, "Whirlpool", "Whirlpool");
+}

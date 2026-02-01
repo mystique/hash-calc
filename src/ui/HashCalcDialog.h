@@ -1,12 +1,20 @@
 #ifndef HASH_CALC_DIALOG_H
 #define HASH_CALC_DIALOG_H
 
-#include "resource.h"
+#include "../../res/resource.h"
 #include "wxx_dialog.h"
 #include "../utils/ConfigManager.h"
 #include <atomic>
+#include <memory>
+#include <vector>
+#include <sstream>
 #include <shobjidl.h>
 #include <wrl/client.h>
+
+// Forward declarations
+namespace core {
+  class IHashAlgorithm;
+}
 
 // Custom message for hash calculation completion
 #define WM_HASH_COMPLETE (WM_USER + 1)
@@ -40,6 +48,16 @@ private:
   bool HasAllAlgorithmsSelected(); // Check if all algorithms are selected
   bool HasValidInput(); // Check if input is valid
   static DWORD WINAPI CalculateHashThread(LPVOID lpParam);
+  
+  // Refactored helper methods
+  void SetCheckboxStates(const int* ids, size_t count, bool checked);
+  void EnableControlsById(const int* ids, size_t count, bool enable);
+  void ComputeHashAlgorithmsForText(std::wstringstream& output, bool& anyComputed, const std::string& inputData);
+  void ComputeHashAlgorithmsForFile(std::wstringstream& output, bool& anyComputed, const std::wstring& filePath);
+  
+  // Static algorithm ID lists
+  static const int s_allAlgorithmIds[];
+  static const size_t s_allAlgorithmCount;
 
 private:
   void OnExit();
