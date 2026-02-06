@@ -118,7 +118,7 @@ void BLAKE3<DIGEST_BITS>::compress(uint32_t cv[8], const uint8_t block[BLOCK_LEN
     for (size_t i = 0; i < 16; i++) {
         m[i] = load32(&block[i * 4]);
     }
-    
+
     // Initialize state
     uint32_t state[16] = {
         cv[0], cv[1], cv[2], cv[3],
@@ -129,13 +129,13 @@ void BLAKE3<DIGEST_BITS>::compress(uint32_t cv[8], const uint8_t block[BLOCK_LEN
         static_cast<uint32_t>(block_len),
         static_cast<uint32_t>(flags)
     };
-    
+
     // 7 rounds
     for (size_t round = 0; round < 7; round++) {
         roundFunction(state, m, round);
     }
-    
-    // Finalize: XOR state with original CV
+
+    // Finalize: XOR the two halves of the state
     for (size_t i = 0; i < 8; i++) {
         cv[i] = state[i] ^ state[i + 8];
     }
@@ -150,7 +150,7 @@ void BLAKE3<DIGEST_BITS>::compressXof(const uint32_t cv[8], const uint8_t block[
     for (size_t i = 0; i < 16; i++) {
         m[i] = load32(&block[i * 4]);
     }
-    
+
     // Initialize state
     uint32_t state[16] = {
         cv[0], cv[1], cv[2], cv[3],
@@ -161,18 +161,20 @@ void BLAKE3<DIGEST_BITS>::compressXof(const uint32_t cv[8], const uint8_t block[
         static_cast<uint32_t>(block_len),
         static_cast<uint32_t>(flags)
     };
-    
+
     // 7 rounds
     for (size_t round = 0; round < 7; round++) {
         roundFunction(state, m, round);
     }
-    
-    // Output full 64 bytes (16 words)
+
+    // Output full 64 bytes (16 words) - XOF mode
+    // First 8 words: state[i] ^ state[i+8]
     for (size_t i = 0; i < 8; i++) {
-        store32(&out[i * 4], state[i] ^ cv[i]);
+        store32(&out[i * 4], state[i] ^ state[i + 8]);
     }
-    for (size_t i = 8; i < 16; i++) {
-        store32(&out[i * 4], state[i] ^ cv[i - 8]);
+    // Last 8 words: state[i+8] ^ cv[i]
+    for (size_t i = 0; i < 8; i++) {
+        store32(&out[(i + 8) * 4], state[i + 8] ^ cv[i]);
     }
 }
 
@@ -228,20 +230,20 @@ void BLAKE3<DIGEST_BITS>::ChunkState::update(const uint8_t* input, size_t input_
         input += take;
         input_len -= take;
         if (input_len > 0) {
-            compress(cv, buf, BLOCK_LEN, chunk_counter, flags | maybeStartFlag());
+            BLAKE3<DIGEST_BITS>::compress(cv, buf, BLOCK_LEN, chunk_counter, flags | maybeStartFlag());
             blocks_compressed += 1;
             buf_len = 0;
             std::memset(buf, 0, BLOCK_LEN);
         }
     }
-    
+
     while (input_len > BLOCK_LEN) {
-        compress(cv, input, BLOCK_LEN, chunk_counter, flags | maybeStartFlag());
+        BLAKE3<DIGEST_BITS>::compress(cv, input, BLOCK_LEN, chunk_counter, flags | maybeStartFlag());
         blocks_compressed += 1;
         input += BLOCK_LEN;
         input_len -= BLOCK_LEN;
     }
-    
+
     fillBuf(input, input_len);
 }
 
@@ -253,8 +255,8 @@ template<unsigned int DIGEST_BITS>
 void BLAKE3<DIGEST_BITS>::Output::chainingValue(uint8_t cv[32]) const {
     uint32_t cv_words[8];
     std::memcpy(cv_words, input_cv, 32);
-    compress(cv_words, block, block_len, counter, flags);
-    storeCvWords(cv, cv_words);
+    BLAKE3<DIGEST_BITS>::compress(cv_words, block, block_len, counter, flags);
+    BLAKE3<DIGEST_BITS>::storeCvWords(cv, cv_words);
 }
 
 template<unsigned int DIGEST_BITS>
@@ -262,14 +264,14 @@ void BLAKE3<DIGEST_BITS>::Output::rootBytes(uint64_t seek, uint8_t* out, size_t 
     if (out_len == 0) {
         return;
     }
-    
+
     uint64_t output_block_counter = seek / 64;
     size_t offset_within_block = static_cast<size_t>(seek % 64);
     uint8_t wide_buf[64];
-    
+
     // Handle offset within first block
     if (offset_within_block) {
-        compressXof(input_cv, block, block_len, output_block_counter, flags | ROOT, wide_buf);
+        BLAKE3<DIGEST_BITS>::compressXof(input_cv, block, block_len, output_block_counter, flags | ROOT, wide_buf);
         size_t available_bytes = 64 - offset_within_block;
         size_t bytes = (out_len > available_bytes) ? available_bytes : out_len;
         std::memcpy(out, wide_buf + offset_within_block, bytes);
@@ -277,10 +279,10 @@ void BLAKE3<DIGEST_BITS>::Output::rootBytes(uint64_t seek, uint8_t* out, size_t 
         out_len -= bytes;
         output_block_counter += 1;
     }
-    
+
     // Generate remaining full blocks
     while (out_len > 0) {
-        compressXof(input_cv, block, block_len, output_block_counter, flags | ROOT, wide_buf);
+        BLAKE3<DIGEST_BITS>::compressXof(input_cv, block, block_len, output_block_counter, flags | ROOT, wide_buf);
         size_t bytes = (out_len > 64) ? 64 : out_len;
         std::memcpy(out, wide_buf, bytes);
         out += bytes;
@@ -326,8 +328,13 @@ template<unsigned int DIGEST_BITS>
 void BLAKE3<DIGEST_BITS>::hasherMergeCvStack(uint64_t total_len) {
     size_t post_merge_stack_len = static_cast<size_t>(popcnt(total_len));
     while (m_cv_stack_len > post_merge_stack_len) {
+        // Parent node takes two 32-byte CVs to form a 64-byte block
+        uint8_t parent_block[BLOCK_LEN];
+        std::memcpy(parent_block, &m_cv_stack[(m_cv_stack_len - 2) * OUT_LEN], OUT_LEN);
+        std::memcpy(parent_block + OUT_LEN, &m_cv_stack[(m_cv_stack_len - 1) * OUT_LEN], OUT_LEN);
+
+        Output output = parentOutput(parent_block, m_key, m_chunk.flags);
         uint8_t* parent_node = &m_cv_stack[(m_cv_stack_len - 2) * OUT_LEN];
-        Output output = parentOutput(parent_node, m_key, m_chunk.flags);
         output.chainingValue(parent_node);
         m_cv_stack_len -= 1;
     }
@@ -418,16 +425,20 @@ void BLAKE3<DIGEST_BITS>::TruncatedFinal(CryptoPP::byte* digest, size_t digestSi
     // Finalize the tree
     Output output;
     size_t cvs_remaining;
-    
+
     if (m_chunk.len() > 0) {
         cvs_remaining = m_cv_stack_len;
         output = chunkOutput(m_chunk);
     } else {
         // There are always at least 2 CVs in the stack in this case
-        cvs_remaining = m_cv_stack_len - 2;
-        output = parentOutput(&m_cv_stack[cvs_remaining * 32], m_key, m_chunk.flags);
+        cvs_remaining = m_cv_stack_len - 1;
+        // Build parent block from last two CVs on stack
+        uint8_t parent_block[BLOCK_LEN];
+        std::memcpy(parent_block, &m_cv_stack[(cvs_remaining - 1) * 32], 32);
+        std::memcpy(parent_block + 32, &m_cv_stack[cvs_remaining * 32], 32);
+        output = parentOutput(parent_block, m_key, m_chunk.flags);
     }
-    
+
     while (cvs_remaining > 0) {
         cvs_remaining -= 1;
         uint8_t parent_block[BLOCK_LEN];

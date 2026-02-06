@@ -24,9 +24,8 @@ const int CHashCalcDialog::s_allAlgorithmIds[] = {
   IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
   IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
   IDC_SHAKE_128, IDC_SHAKE_256,
-  IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
-  IDC_BLAKE2B, IDC_BLAKE2S,
-  IDC_LSH_256, IDC_LSH_512
+  IDC_BLAKE2B, IDC_BLAKE2S, IDC_BLAKE3,
+  IDC_TIGER, IDC_WHIRLPOOL, IDC_LSH_256, IDC_SM3, IDC_LSH_512
 };
 
 const size_t CHashCalcDialog::s_allAlgorithmCount = sizeof(s_allAlgorithmIds) / sizeof(int);
@@ -255,9 +254,8 @@ BOOL CHashCalcDialog::OnCommand(WPARAM wparam, LPARAM lparam) {
       IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
       IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
       IDC_SHAKE_128, IDC_SHAKE_256,
-      IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
       IDC_BLAKE2B, IDC_BLAKE2S,
-      IDC_LSH_256, IDC_LSH_512
+      IDC_TIGER, IDC_WHIRLPOOL, IDC_LSH_256, IDC_SM3, IDC_LSH_512
     };
     
     for (int algoId : algorithmIDs) {
@@ -1173,10 +1171,8 @@ void CHashCalcDialog::ComputeHashAlgorithmsForText(
   checkAndCompute(IDC_BLAKE2B, "BLAKE2b", "BLAKE2b");
   checkAndCompute(IDC_BLAKE2S, "BLAKE2s", "BLAKE2s");
 
-  // Asian (LSH and SM3)
-  checkAndCompute(IDC_LSH_256, "LSH-256", "LSH-256");
-  checkAndCompute(IDC_LSH_512, "LSH-512", "LSH-512");
-  checkAndCompute(IDC_SM3, "SM3", "SM3");
+  // BLAKE3
+  checkAndCompute(IDC_BLAKE3, "BLAKE3", "BLAKE3");
 
   // ========== Tab 3: HAVAL && RIPEMD (left to right order as shown in UI) ==========
   // HAVAL Family
@@ -1228,6 +1224,9 @@ void CHashCalcDialog::ComputeHashAlgorithmsForText(
   // Others
   checkAndCompute(IDC_TIGER, "Tiger", "Tiger");
   checkAndCompute(IDC_WHIRLPOOL, "Whirlpool", "Whirlpool");
+  checkAndCompute(IDC_SM3, "SM3", "SM3");
+  checkAndCompute(IDC_LSH_256, "LSH-256", "LSH-256");
+  checkAndCompute(IDC_LSH_512, "LSH-512", "LSH-512");
 }
 
 void CHashCalcDialog::ComputeHashAlgorithmsForFile(
@@ -1327,10 +1326,8 @@ void CHashCalcDialog::ComputeHashAlgorithmsForFile(
   checkAndCompute(IDC_BLAKE2B, "BLAKE2b", "BLAKE2b");
   checkAndCompute(IDC_BLAKE2S, "BLAKE2s", "BLAKE2s");
 
-  // Asian (LSH and SM3)
-  checkAndCompute(IDC_LSH_256, "LSH-256", "LSH-256");
-  checkAndCompute(IDC_LSH_512, "LSH-512", "LSH-512");
-  checkAndCompute(IDC_SM3, "SM3", "SM3");
+  // BLAKE3
+  checkAndCompute(IDC_BLAKE3, "BLAKE3", "BLAKE3");
 
   // ========== Tab 3: HAVAL && RIPEMD (left to right order as shown in UI) ==========
   // HAVAL Family
@@ -1382,6 +1379,9 @@ void CHashCalcDialog::ComputeHashAlgorithmsForFile(
   // Others
   checkAndCompute(IDC_TIGER, "Tiger", "Tiger");
   checkAndCompute(IDC_WHIRLPOOL, "Whirlpool", "Whirlpool");
+  checkAndCompute(IDC_LSH_256, "LSH-256", "LSH-256");
+  checkAndCompute(IDC_SM3, "SM3", "SM3");
+  checkAndCompute(IDC_LSH_512, "LSH-512", "LSH-512");
 }
 
 // ============================================================================

@@ -139,6 +139,7 @@ std::wstring ConfigManager::GetAlgorithmName(int algorithmId)
         {IDC_WHIRLPOOL, L"WHIRLPOOL"},
         {IDC_BLAKE2B, L"BLAKE2B"},
         {IDC_BLAKE2S, L"BLAKE2S"},
+        {IDC_BLAKE3, L"BLAKE3"},
         {IDC_LSH_256, L"LSH-256"},
         {IDC_LSH_512, L"LSH-512"}
     };
@@ -185,6 +186,7 @@ std::wstring ConfigManager::GetAlgorithmSection(int algorithmId)
         case IDC_SHAKE_256:
         case IDC_BLAKE2B:
         case IDC_BLAKE2S:
+        case IDC_BLAKE3:
         case IDC_LSH_256:
         case IDC_SM3:
         case IDC_LSH_512:
@@ -267,6 +269,7 @@ int ConfigManager::GetAlgorithmIdFromName(const std::wstring& name)
         {L"WHIRLPOOL", IDC_WHIRLPOOL},
         {L"BLAKE2B", IDC_BLAKE2B},
         {L"BLAKE2S", IDC_BLAKE2S},
+        {L"BLAKE3", IDC_BLAKE3},
         {L"LSH-256", IDC_LSH_256},
         {L"LSH-512", IDC_LSH_512}
     };
@@ -310,7 +313,7 @@ bool ConfigManager::LoadConfig()
         IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
         IDC_SHAKE_128, IDC_SHAKE_256,
         IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
-        IDC_BLAKE2B, IDC_BLAKE2S,
+        IDC_BLAKE2B, IDC_BLAKE2S, IDC_BLAKE3,
         IDC_LSH_256, IDC_LSH_512
     };
     

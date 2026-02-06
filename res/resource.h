@@ -50,14 +50,10 @@
 #define IDC_SHAKE_128 2021
 #define IDC_SHAKE_256 2022
 
-// BLAKE Group (BLAKE2b, BLAKE2s)
+// BLAKE Group (BLAKE2b, BLAKE2s, BLAKE3)
 #define IDC_BLAKE2B 2031
 #define IDC_BLAKE2S 2032
-
-// Asian Group (LSH-256, SM3, LSH-512)
-#define IDC_LSH_256 2041
-#define IDC_SM3 2042
-#define IDC_LSH_512 2043
+#define IDC_BLAKE3 2033
 
 // ========== TAB 3: HAVAL & RIPEMD ==========
 // HAVAL Group (128-256)
@@ -88,9 +84,12 @@
 #define IDC_CRC64 4005
 #define IDC_CRC8 4006
 
-// Others Group (Tiger, Whirlpool)
+// Others Group (Tiger, Whirlpool, LSH, SM3)
 #define IDC_TIGER 4011
 #define IDC_WHIRLPOOL 4012
+#define IDC_LSH_256 4013
+#define IDC_SM3 4014
+#define IDC_LSH_512 4015
 
 // ========== UI Elements ==========
 // Select/Clear buttons
