@@ -110,6 +110,10 @@ HashCalc supports **50+ cryptographic algorithms** organized into 4 categories:
 
 ### 🎨 User Interface Features
 - **Modern Tab-Based Architecture**: Clean tab interface using Win32++ CTab control with separate views for each category
+- **System Tray Integration**: Minimize to system tray for unobtrusive background operation
+  - Left-click or double-click tray icon to restore window
+  - Right-click for context menu (Restore, Stop, Exit)
+  - Automatic minimize-to-tray on window minimize
 - **Stay on Top**: Keep the window visible while working with other applications
 - **Progress Bar**: Visual progress indicator with Windows taskbar integration
 - **Batch Operations**: Select multiple algorithms and compute all at once
@@ -239,6 +243,7 @@ To verify that a file hasn't been tampered with:
 |---------|-------------|
 | **🖱️ Drag & Drop** | Simply drag files onto the HashCalc window for instant hashing |
 | **📌 Stay on Top** | Enable this option to keep HashCalc visible while working |
+| **🔔 System Tray** | Minimize to system tray for unobtrusive background operation |
 | **⚡ Multi-Algorithm** | Select multiple algorithms to compute all hashes simultaneously |
 | **💾 Auto-Save** | Your last selected algorithms are automatically saved for next time |
 | **📊 Progress Bar** | Visual progress indicator integrated with Windows taskbar |
@@ -269,10 +274,12 @@ The application follows a clean, layered architecture with clear separation of c
 │  │  Win32++ Tab-Based Architecture                     │   │
 │  │  • HashCalcDialog (Main Window)                     │   │
 │  │  • CTab Control (Tab Management)                    │   │
+│  │  • TabViewBase (Base Class for Tab Views)           │   │
 │  │  • TabViewSHA (SHA & MD Family)                     │   │
 │  │  • TabViewSHA3 (SHA-3 & Modern Algorithms)          │   │
 │  │  • TabViewHAVAL (HAVAL & RIPEMD)                    │   │
 │  │  • TabViewChecksum (Checksum & Others)              │   │
+│  │  • System Tray Integration (Minimize-to-Tray)       │   │
 │  │  • HoverButton (Custom Controls)                    │   │
 │  └─────────────────────────────────────────────────────┘   │
 └───────────────────────────┬─────────────────────────────────┘
@@ -307,8 +314,9 @@ The application follows a clean, layered architecture with clear separation of c
 |-----------|---------------|
 | **HashAlgorithmFactory** | Factory pattern for creating hash algorithm instances with automatic registration |
 | **IHashAlgorithm** | Abstract interface defining the contract for all hash algorithm implementations |
-| **HashCalcDialog** | Main UI window handling user interactions, file operations, and threading |
+| **HashCalcDialog** | Main UI window handling user interactions, file operations, threading, and system tray |
 | **CTab** | Win32++ tab control managing the four algorithm category views |
+| **TabViewBase** | Base class for tab views providing common functionality and algorithm management |
 | **TabView Classes** | Separate dialog views for each algorithm category (SHA, SHA3, HAVAL, Checksum) |
 | **ConfigManager** | Manages application configuration persistence via Windows Registry |
 | **EditUtils** | Utility functions for text and edit control operations |
@@ -458,6 +466,7 @@ hash-calc/
     │
     ├── 📁 ui/                     # User interface components
     │   ├── HashCalcDialog.{h,cpp}     # Main dialog window
+    │   ├── TabViewBase.{h,cpp}        # Base class for tab views
     │   ├── TabViewSHA.{h,cpp}         # SHA & MD Family tab view
     │   ├── TabViewSHA3.{h,cpp}        # SHA-3 & Modern tab view
     │   ├── TabViewHAVAL.{h,cpp}       # HAVAL & RIPEMD tab view
@@ -677,13 +686,19 @@ If you encounter any issues or have questions:
 
 ## Changelog
 
-### 🎉 Version 1.2.0 - Tab Architecture Refactor
+### 🎉 Version 1.2.0 - Tab Architecture & System Tray
 
 **Release Date**: 2026-02
 
 #### ✨ New Features
+- **System Tray Integration**: Minimize to system tray for unobtrusive background operation
+  - Left-click or double-click tray icon to restore window
+  - Right-click for context menu with Restore, Stop, and Exit options
+  - Automatic minimize-to-tray on window minimize
+  - Uses Windows Shell_NotifyIcon API with proper message handling
 - **Tab-Based Architecture**: Complete UI refactor using Win32++ CTab control
   - Separate tab view classes for each algorithm category
+  - TabViewBase base class providing common functionality
   - Cleaner code organization with delegated responsibility
   - Improved maintainability and extensibility
   - Each tab view manages its own algorithm selection and state
@@ -693,6 +708,7 @@ If you encounter any issues or have questions:
 - Better separation of concerns in UI layer
 - Enhanced code organization with modular tab views
 - Improved resource management with separate dialog templates
+- Reduced code duplication across tab views with base class
 
 ---
 
