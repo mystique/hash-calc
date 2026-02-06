@@ -80,6 +80,13 @@ private:
   void LoadConfiguration();
   void SaveConfiguration();
 
+  // System tray functions
+  void CreateTrayIcon();
+  void RemoveTrayIcon();
+  void ShowTrayMenu();
+  void RestoreFromTray();
+  void MinimizeToTray();
+
   CFont m_fontResult;
 
   // Win32++ Tab Control and Views
@@ -99,6 +106,10 @@ private:
   
   // Taskbar progress
   Microsoft::WRL::ComPtr<ITaskbarList3> m_pTaskbarList;
+
+  // System tray
+  NOTIFYICONDATA m_nid;
+  bool m_bTrayIconCreated;
 };
 
 #endif // HASH_CALC_DIALOG_H

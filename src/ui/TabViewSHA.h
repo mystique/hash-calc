@@ -1,39 +1,23 @@
 #ifndef TAB_VIEW_SHA_H
 #define TAB_VIEW_SHA_H
 
-#include "../../res/resource.h"
-#include "wxx_dialog.h"
-#include <map>
+#include "TabViewBase.h"
 
 // Tab View for SHA & MD algorithms (Tab 0)
-class CTabViewSHA : public Win32xx::CDialog {
+class CTabViewSHA : public CTabViewBase {
 public:
   CTabViewSHA();
   virtual ~CTabViewSHA() = default;
 
-  // Set parent dialog for notifications
-  void SetParentDialog(HWND hParent) { m_hParentDialog = hParent; }
-
-  // Algorithm management
-  int CountSelectedAlgorithms() const;
-  void SetAlgorithmStates(const std::map<int, bool>& states);
-  std::map<int, bool> GetAlgorithmStates() const;
-  void SelectAll();
-  void ClearAll();
-  void EnableControls(bool enable);
-
 protected:
-  virtual INT_PTR DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
-  virtual BOOL OnInitDialog() override;
-  virtual BOOL OnCommand(WPARAM wparam, LPARAM lparam) override;
+  // Implement base class interface
+  virtual const int* GetAlgorithmIds() const override;
+  virtual size_t GetAlgorithmCount() const override;
 
 private:
   // Algorithm IDs for this tab
   static const int s_algorithmIds[];
   static const size_t s_algorithmCount;
-
-  // Parent dialog pointer for notifications
-  HWND m_hParentDialog;
 };
 
 #endif // TAB_VIEW_SHA_H

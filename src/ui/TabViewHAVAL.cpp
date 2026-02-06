@@ -15,106 +15,40 @@ const int CTabViewHAVAL::s_havalPassIds[] = {
 
 const size_t CTabViewHAVAL::s_havalPassCount = sizeof(s_havalPassIds) / sizeof(int);
 
-CTabViewHAVAL::CTabViewHAVAL() : CDialog(IDD_TAB_VIEW_HAVAL), m_hParentDialog(NULL) {
+CTabViewHAVAL::CTabViewHAVAL() : CTabViewBase(IDD_TAB_VIEW_HAVAL) {
 }
 
-INT_PTR CTabViewHAVAL::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
-  return CDialog::DialogProc(uMsg, wParam, lParam);
+const int* CTabViewHAVAL::GetAlgorithmIds() const {
+  return s_algorithmIds;
 }
 
-BOOL CTabViewHAVAL::OnInitDialog() {
-  return TRUE;
+size_t CTabViewHAVAL::GetAlgorithmCount() const {
+  return s_algorithmCount;
 }
 
-BOOL CTabViewHAVAL::OnCommand(WPARAM wparam, LPARAM lparam) {
-  UNREFERENCED_PARAMETER(lparam);
-
-  UINT id = LOWORD(wparam);
-  UINT code = HIWORD(wparam);
-
-  if (code == BN_CLICKED) {
-    // Check algorithm checkboxes
-    for (size_t i = 0; i < s_algorithmCount; i++) {
-      if (id == s_algorithmIds[i]) {
-        if (m_hParentDialog) {
-          ::PostMessage(m_hParentDialog, WM_COMMAND, MAKEWPARAM(id, BN_CLICKED), (LPARAM)GetDlgItem(id).GetHwnd());
-        }
-        return TRUE;
-      }
-    }
-
-    // Check HAVAL pass checkboxes
-    for (size_t i = 0; i < s_havalPassCount; i++) {
-      if (id == s_havalPassIds[i]) {
-        if (m_hParentDialog) {
-          ::PostMessage(m_hParentDialog, WM_COMMAND, MAKEWPARAM(id, BN_CLICKED), (LPARAM)GetDlgItem(id).GetHwnd());
-        }
-        return TRUE;
-      }
-    }
-  }
-
-  return FALSE;
+const int* CTabViewHAVAL::GetAdditionalControlIds() const {
+  return s_havalPassIds;
 }
 
-int CTabViewHAVAL::CountSelectedAlgorithms() const {
-  int count = 0;
-  for (size_t i = 0; i < s_algorithmCount; i++) {
-    if (IsDlgButtonChecked(s_algorithmIds[i]) == BST_CHECKED) {
-      count++;
-    }
-  }
-  return count;
+size_t CTabViewHAVAL::GetAdditionalControlCount() const {
+  return s_havalPassCount;
 }
 
-void CTabViewHAVAL::SetAlgorithmStates(const std::map<int, bool>& states) {
-  for (size_t i = 0; i < s_algorithmCount; i++) {
-    int id = s_algorithmIds[i];
-    auto it = states.find(id);
-    if (it != states.end()) {
-      CheckDlgButton(id, it->second ? BST_CHECKED : BST_UNCHECKED);
-    }
-  }
-}
-
-std::map<int, bool> CTabViewHAVAL::GetAlgorithmStates() const {
-  std::map<int, bool> states;
-  for (size_t i = 0; i < s_algorithmCount; i++) {
-    int id = s_algorithmIds[i];
-    states[id] = (IsDlgButtonChecked(id) == BST_CHECKED);
-  }
-  return states;
-}
-
-void CTabViewHAVAL::SelectAll() {
-  for (size_t i = 0; i < s_algorithmCount; i++) {
-    CheckDlgButton(s_algorithmIds[i], BST_CHECKED);
-  }
+void CTabViewHAVAL::OnSelectAllExtra() {
   // Also select all HAVAL passes
   for (size_t i = 0; i < s_havalPassCount; i++) {
     CheckDlgButton(s_havalPassIds[i], BST_CHECKED);
   }
-
-  // Force update
-  if (m_hParentDialog) {
-    ::PostMessage(m_hParentDialog, WM_COMMAND, MAKEWPARAM(s_algorithmIds[0], BN_CLICKED), 0);
-  }
 }
 
-void CTabViewHAVAL::ClearAll() {
-  for (size_t i = 0; i < s_algorithmCount; i++) {
-    CheckDlgButton(s_algorithmIds[i], BST_UNCHECKED);
-  }
+void CTabViewHAVAL::OnClearAllExtra() {
   // Also clear all HAVAL passes
   for (size_t i = 0; i < s_havalPassCount; i++) {
     CheckDlgButton(s_havalPassIds[i], BST_UNCHECKED);
   }
 }
 
-void CTabViewHAVAL::EnableControls(bool enable) {
-  for (size_t i = 0; i < s_algorithmCount; i++) {
-    GetDlgItem(s_algorithmIds[i]).EnableWindow(enable);
-  }
+void CTabViewHAVAL::OnEnableControlsExtra(bool enable) {
   // Also enable/disable HAVAL pass checkboxes
   for (size_t i = 0; i < s_havalPassCount; i++) {
     GetDlgItem(s_havalPassIds[i]).EnableWindow(enable);

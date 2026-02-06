@@ -109,7 +109,7 @@ HashCalc supports **50+ cryptographic algorithms** organized into 4 categories:
 </details>
 
 ### 🎨 User Interface Features
-- **Tabbed Interface**: Organized algorithm selection across 4 intuitive tabs
+- **Modern Tab-Based Architecture**: Clean tab interface using Win32++ CTab control with separate views for each category
 - **Stay on Top**: Keep the window visible while working with other applications
 - **Progress Bar**: Visual progress indicator with Windows taskbar integration
 - **Batch Operations**: Select multiple algorithms and compute all at once
@@ -266,10 +266,14 @@ The application follows a clean, layered architecture with clear separation of c
 ┌─────────────────────────────────────────────────────────────┐
 │                    UI Layer                                 │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │  Win32++ Dialogs & Controls                         │   │
+│  │  Win32++ Tab-Based Architecture                     │   │
 │  │  • HashCalcDialog (Main Window)                     │   │
+│  │  • CTab Control (Tab Management)                    │   │
+│  │  • TabViewSHA (SHA & MD Family)                     │   │
+│  │  • TabViewSHA3 (SHA-3 & Modern Algorithms)          │   │
+│  │  • TabViewHAVAL (HAVAL & RIPEMD)                    │   │
+│  │  • TabViewChecksum (Checksum & Others)              │   │
 │  │  • HoverButton (Custom Controls)                    │   │
-│  │  • Resource Management (Icons, Dialogs)             │   │
 │  └─────────────────────────────────────────────────────┘   │
 └───────────────────────────┬─────────────────────────────────┘
                             │
@@ -304,6 +308,8 @@ The application follows a clean, layered architecture with clear separation of c
 | **HashAlgorithmFactory** | Factory pattern for creating hash algorithm instances with automatic registration |
 | **IHashAlgorithm** | Abstract interface defining the contract for all hash algorithm implementations |
 | **HashCalcDialog** | Main UI window handling user interactions, file operations, and threading |
+| **CTab** | Win32++ tab control managing the four algorithm category views |
+| **TabView Classes** | Separate dialog views for each algorithm category (SHA, SHA3, HAVAL, Checksum) |
 | **ConfigManager** | Manages application configuration persistence via Windows Registry |
 | **EditUtils** | Utility functions for text and edit control operations |
 
@@ -452,6 +458,10 @@ hash-calc/
     │
     ├── 📁 ui/                     # User interface components
     │   ├── HashCalcDialog.{h,cpp}     # Main dialog window
+    │   ├── TabViewSHA.{h,cpp}         # SHA & MD Family tab view
+    │   ├── TabViewSHA3.{h,cpp}        # SHA-3 & Modern tab view
+    │   ├── TabViewHAVAL.{h,cpp}       # HAVAL & RIPEMD tab view
+    │   ├── TabViewChecksum.{h,cpp}    # Checksum & Others tab view
     │   └── HoverButton.{h,cpp}        # Custom button control
     │
     └── 📁 utils/                  # Utility functions
@@ -667,7 +677,26 @@ If you encounter any issues or have questions:
 
 ## Changelog
 
-### 🎉 Version 1.1.0 - BLAKE3 Update
+### 🎉 Version 1.2.0 - Tab Architecture Refactor
+
+**Release Date**: 2026-02
+
+#### ✨ New Features
+- **Tab-Based Architecture**: Complete UI refactor using Win32++ CTab control
+  - Separate tab view classes for each algorithm category
+  - Cleaner code organization with delegated responsibility
+  - Improved maintainability and extensibility
+  - Each tab view manages its own algorithm selection and state
+
+#### 📝 Improvements
+- Simplified main dialog logic by delegating to tab views
+- Better separation of concerns in UI layer
+- Enhanced code organization with modular tab views
+- Improved resource management with separate dialog templates
+
+---
+
+### 🎉 Version 1.1.0 - BLAKE3 & CRC-8 Update
 
 **Release Date**: 2026-02
 
@@ -677,11 +706,16 @@ If you encounter any issues or have questions:
   - Support for multiple output sizes (128/160/192/224/256/384/512-bit)
   - Extremely fast performance (faster than MD5, SHA-1, SHA-2, SHA-3)
   - Integrated with Crypto++ `HashTransformation` interface
+- **CRC-8 Algorithm**: Added CRC-8 checksum with full UI integration
+  - Native implementation optimized for performance
+  - Consistent interface with other hash algorithms
 
 #### 📝 Improvements
 - Added comprehensive implementation documentation
 - Enhanced native algorithm architecture
 - Improved code organization and structure
+- Reorganized hash algorithm implementations into categorized subdirectories
+- Added Windows taskbar progress indicator support
 
 ---
 

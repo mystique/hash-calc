@@ -143,4 +143,13 @@
 // Input Group
 #define IDC_GROUP_INPUT 6041
 
+// ========== System Tray ==========
+// Tray icon message ID
+#define WM_TRAYICON (WM_USER + 100)
+
+// Tray menu items
+#define IDM_TRAY_RESTORE 7001
+#define IDM_TRAY_STOP 7002
+#define IDM_TRAY_EXIT 7003
+
 #endif // RESOURCE_H

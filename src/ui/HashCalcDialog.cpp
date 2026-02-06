@@ -31,11 +31,15 @@ const int CHashCalcDialog::s_allAlgorithmIds[] = {
 
 const size_t CHashCalcDialog::s_allAlgorithmCount = sizeof(s_allAlgorithmIds) / sizeof(int);
 
-CHashCalcDialog::CHashCalcDialog() 
-  : CDialog(IDD_MAIN_DIALOG), 
-    m_hCalcThread(NULL), 
-    m_bCancelCalculation(false), 
-    m_bIsCalculating(false) {}
+CHashCalcDialog::CHashCalcDialog()
+  : CDialog(IDD_MAIN_DIALOG),
+    m_hCalcThread(NULL),
+    m_bCancelCalculation(false),
+    m_bIsCalculating(false),
+    m_bTrayIconCreated(false) {
+  // Initialize NOTIFYICONDATA structure
+  ZeroMemory(&m_nid, sizeof(m_nid));
+}
 
 BOOL CHashCalcDialog::PreTranslateMessage(MSG& msg) {
   // Handle Enter key in edit boxes
@@ -146,6 +150,9 @@ BOOL CHashCalcDialog::OnInitDialog() {
     m_pTaskbarList->HrInit();
   }
 
+  // Initialize system tray icon (but don't show it yet)
+  CreateTrayIcon();
+
   return TRUE;
 }
 
@@ -220,6 +227,21 @@ BOOL CHashCalcDialog::OnCommand(WPARAM wparam, LPARAM lparam) {
     OnStayOnTop();
     SaveConfiguration();
     return TRUE;
+
+  // System tray menu commands
+  case IDM_TRAY_RESTORE:
+    RestoreFromTray();
+    return TRUE;
+
+  case IDM_TRAY_STOP:
+    if (m_bIsCalculating) {
+      OnCalculate(); // This will stop the calculation
+    }
+    return TRUE;
+
+  case IDM_TRAY_EXIT:
+    OnExit();
+    return TRUE;
   }
 
   // Handle all algorithm checkbox changes
@@ -276,16 +298,37 @@ LRESULT CHashCalcDialog::OnNotify(WPARAM wparam, LPARAM lparam) {
 }
 
 INT_PTR CHashCalcDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
+  // Handle system tray icon messages
+  if (uMsg == WM_TRAYICON) {
+    if (lParam == WM_LBUTTONDOWN || lParam == WM_LBUTTONDBLCLK) {
+      // Left click or double click - restore window
+      RestoreFromTray();
+      return TRUE;
+    } else if (lParam == WM_RBUTTONDOWN) {
+      // Right click - show context menu
+      ShowTrayMenu();
+      return TRUE;
+    }
+  }
+
+  // Handle window minimize - minimize to tray instead
+  if (uMsg == WM_SYSCOMMAND) {
+    if (wParam == SC_MINIMIZE) {
+      MinimizeToTray();
+      return TRUE;
+    }
+  }
+
   // Handle Enter key in file path edit box
   if (uMsg == WM_COMMAND) {
     UINT id = LOWORD(wParam);
     UINT code = HIWORD(wParam);
-    
+
     if (id == IDC_EDIT_FILE && code == EN_SETFOCUS) {
       // Store original procedure for subclassing if needed
     }
   }
-  
+
   if (uMsg == WM_DROPFILES) {
     OnDropFiles((HDROP)wParam);
     return TRUE;
@@ -359,6 +402,12 @@ void CHashCalcDialog::OnCancel() {
 }
 
 void CHashCalcDialog::OnExit() {
+  // Remove tray icon before closing
+  RemoveTrayIcon();
+
+  // Save configuration before exiting
+  SaveConfiguration();
+
   // Close the dialog
   EndDialog(IDOK);
 }
@@ -1333,4 +1382,84 @@ void CHashCalcDialog::ComputeHashAlgorithmsForFile(
   // Others
   checkAndCompute(IDC_TIGER, "Tiger", "Tiger");
   checkAndCompute(IDC_WHIRLPOOL, "Whirlpool", "Whirlpool");
+}
+
+// ============================================================================
+// System Tray Functions
+// ============================================================================
+
+void CHashCalcDialog::CreateTrayIcon() {
+  if (m_bTrayIconCreated) {
+    return; // Already created
+  }
+
+  // Initialize NOTIFYICONDATA structure
+  m_nid.cbSize = sizeof(NOTIFYICONDATA);
+  m_nid.hWnd = *this;
+  m_nid.uID = 1;
+  m_nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+  m_nid.uCallbackMessage = WM_TRAYICON;
+
+  // Load the application icon
+  m_nid.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON));
+
+  // Set tooltip text
+  wcscpy_s(m_nid.szTip, L"Hash Calculator");
+
+  // Add the icon to the system tray (but window is still visible)
+  Shell_NotifyIcon(NIM_ADD, &m_nid);
+  m_bTrayIconCreated = true;
+}
+
+void CHashCalcDialog::RemoveTrayIcon() {
+  if (m_bTrayIconCreated) {
+    Shell_NotifyIcon(NIM_DELETE, &m_nid);
+    m_bTrayIconCreated = false;
+  }
+}
+
+void CHashCalcDialog::ShowTrayMenu() {
+  // Get cursor position for menu
+  POINT pt;
+  GetCursorPos(&pt);
+
+  // Create popup menu
+  HMENU hMenu = CreatePopupMenu();
+  if (!hMenu) return;
+
+  // Add menu items
+  AppendMenu(hMenu, MF_STRING, IDM_TRAY_RESTORE, L"Restore");
+  AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+
+  // Add Stop menu item - enabled only when calculating
+  UINT stopFlags = MF_STRING;
+  if (!m_bIsCalculating) {
+    stopFlags |= MF_GRAYED;
+  }
+  AppendMenu(hMenu, stopFlags, IDM_TRAY_STOP, L"Stop");
+
+  AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+  AppendMenu(hMenu, MF_STRING, IDM_TRAY_EXIT, L"Exit");
+
+  // Required for popup menus to work correctly
+  SetForegroundWindow();
+
+  // Show the menu
+  TrackPopupMenu(hMenu, TPM_BOTTOMALIGN | TPM_LEFTALIGN, pt.x, pt.y, 0, *this, NULL);
+
+  // Clean up
+  DestroyMenu(hMenu);
+}
+
+void CHashCalcDialog::RestoreFromTray() {
+  // Show the window
+  ShowWindow(SW_SHOW);
+  ShowWindow(SW_RESTORE);
+  SetForegroundWindow();
+  SetFocus();
+}
+
+void CHashCalcDialog::MinimizeToTray() {
+  // Hide the window
+  ShowWindow(SW_HIDE);
 }
