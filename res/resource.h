@@ -5,6 +5,12 @@
 #define IDD_MAIN_DIALOG 101
 #define IDI_APP_ICON 102
 
+// Tab View Dialog IDs
+#define IDD_TAB_VIEW_SHA 201
+#define IDD_TAB_VIEW_SHA3 202
+#define IDD_TAB_VIEW_HAVAL 203
+#define IDD_TAB_VIEW_CHECKSUM 204
+
 // ========== TAB 1: SHA & MD ==========
 // SHA Group (160-512)
 #define IDC_SHA_160 1001

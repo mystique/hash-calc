@@ -95,22 +95,34 @@ BOOL CHashCalcDialog::OnInitDialog() {
   AttachAutoScrollingEdit(GetDlgItem(IDC_EDIT_RESULT));
 
   // Default HAVAL pass: None checked initially (User request)
-  // CheckRadioButton(IDC_HAVAL_PASS3, IDC_HAVAL_PASS5, IDC_HAVAL_PASS3); 
+  // CheckRadioButton(IDC_HAVAL_PASS3, IDC_HAVAL_PASS5, IDC_HAVAL_PASS3);
 
-  // Initialize Tab Control
-  HWND hTab = GetDlgItem(IDC_TAB_MAIN);
-  TCITEM tie = {0};
-  tie.mask = TCIF_TEXT; 
-  tie.pszText = (LPWSTR)L"SHA && MD";
-  TabCtrl_InsertItem(hTab, 0, &tie);
-  tie.pszText = (LPWSTR)L"SHA-3 && Modern";
-  TabCtrl_InsertItem(hTab, 1, &tie);
-  tie.pszText = (LPWSTR)L"HAVAL && RIPEMD";
-  TabCtrl_InsertItem(hTab, 2, &tie);
-  tie.pszText = (LPWSTR)L"Checksum && Others";
-  TabCtrl_InsertItem(hTab, 3, &tie);
+  // Initialize Tab Control with Win32++ CTab
+  m_tabControl.AttachDlgItem(IDC_TAB_MAIN, *this);
 
-  UpdateTabDisplay();
+  // Create tab views (they will create their own windows from dialog templates)
+  m_viewSHA.Create(*this);
+  m_viewSHA3.Create(*this);
+  m_viewHAVAL.Create(*this);
+  m_viewChecksum.Create(*this);
+
+  // Set parent dialog for notifications
+  m_viewSHA.SetParentDialog(*this);
+  m_viewSHA3.SetParentDialog(*this);
+  m_viewHAVAL.SetParentDialog(*this);
+  m_viewChecksum.SetParentDialog(*this);
+
+  // Add views to tab control
+  m_tabControl.AddTabPage(&m_viewSHA, L"SHA && MD");
+  m_tabControl.AddTabPage(&m_viewSHA3, L"SHA-3 && Modern");
+  m_tabControl.AddTabPage(&m_viewHAVAL, L"HAVAL && RIPEMD");
+  m_tabControl.AddTabPage(&m_viewChecksum, L"Checksum && Others");
+
+  // Select first tab
+  m_tabControl.SelectPage(0);
+
+  // Update tab names with initial counts
+  UpdateTabNames();
 
   // Initialize progress bar (marquee style, initially hidden)
   HWND hProgress = GetDlgItem(IDC_PROGRESS_CALC);
@@ -229,7 +241,7 @@ BOOL CHashCalcDialog::OnCommand(WPARAM wparam, LPARAM lparam) {
     for (int algoId : algorithmIDs) {
       if (id == algoId) {
         UpdateButtonStates();
-        UpdateTabDisplay(); // Update tab names with algorithm count
+        UpdateTabNames(); // Update tab names with algorithm count
         SaveConfiguration();
         return TRUE;
       }
@@ -240,7 +252,7 @@ BOOL CHashCalcDialog::OnCommand(WPARAM wparam, LPARAM lparam) {
     for (int passId : havalPassIDs) {
       if (id == passId) {
         UpdateButtonStates(); // Update button states when HAVAL pass selection changes
-        UpdateTabDisplay(); // Update tab names when HAVAL pass selection changes
+        UpdateTabNames(); // Update tab names when HAVAL pass selection changes
         SaveConfiguration();
         return TRUE;
       }
@@ -252,10 +264,14 @@ BOOL CHashCalcDialog::OnCommand(WPARAM wparam, LPARAM lparam) {
 
 LRESULT CHashCalcDialog::OnNotify(WPARAM wparam, LPARAM lparam) {
   LPNMHDR pnmh = (LPNMHDR)lparam;
-  if (pnmh->idFrom == IDC_TAB_MAIN && pnmh->code == TCN_SELCHANGE) {
-    UpdateTabDisplay();
+
+  // CTab handles tab switching automatically
+  // We only need to update tab names when selection changes
+  if (pnmh->hwndFrom == m_tabControl.GetHwnd() && pnmh->code == TCN_SELCHANGE) {
+    UpdateTabNames();  // Just update the text, not show/hide
     return 0;
   }
+
   return CDialog::OnNotify(wparam, lparam);
 }
 
@@ -309,93 +325,32 @@ INT_PTR CHashCalcDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
   return CDialog::DialogProc(uMsg, wParam, lParam);
 }
 
-void CHashCalcDialog::UpdateTabDisplay() {
-  HWND hTab = GetDlgItem(IDC_TAB_MAIN);
-  int sel = TabCtrl_GetCurSel(hTab);
-
-  // Tab names
+void CHashCalcDialog::UpdateTabNames() {
   const wchar_t* baseTabNames[] = {
     L"SHA && MD",
     L"SHA-3 && Modern",
     L"HAVAL && RIPEMD",
     L"Checksum && Others"
   };
-  
-  // Update all tab names with algorithm counts
-  // Using static buffers to ensure the strings remain valid after TabCtrl_SetItem
+
   static wchar_t tabNameBuffers[4][100];
-  
+
+  // Get counts from each view
   for (int i = 0; i < 4; i++) {
-    int count = CountSelectedAlgorithmsForTab(i);
-    
-    // Build tab name with count
+    int count = 0;
+    if (i == 0) count = m_viewSHA.CountSelectedAlgorithms();
+    else if (i == 1) count = m_viewSHA3.CountSelectedAlgorithms();
+    else if (i == 2) count = m_viewHAVAL.CountSelectedAlgorithms();
+    else if (i == 3) count = m_viewChecksum.CountSelectedAlgorithms();
+
     if (count > 0) {
       swprintf_s(tabNameBuffers[i], 100, L"%s (%d)", baseTabNames[i], count);
     } else {
       wcscpy_s(tabNameBuffers[i], 100, baseTabNames[i]);
     }
-    
-    TCITEM tie = {0};
-    tie.mask = TCIF_TEXT;
-    tie.pszText = tabNameBuffers[i];
-    TabCtrl_SetItem(hTab, i, &tie);
+
+    m_tabControl.SetTabText(i, tabNameBuffers[i]);
   }
-
-  // Tab 0: SHA & MD
-  // Includes: SHA-1/2 group, MD group, MD6 group
-  int tab0[] = {
-      IDC_GROUP_SHA, IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
-      IDC_GROUP_MD, IDC_MD2, IDC_MD4, IDC_MD5,
-      IDC_GROUP_MD6, IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512
-  };
-
-  // Tab 1: SHA-3 & Modern
-  // Includes: SHA-3 group, BLAKE group, LSH group, SM3
-  int tab1[] = {
-      IDC_GROUP_SHA3, IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
-      IDC_GROUP_KECCAK, IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
-      IDC_GROUP_SHAKE, IDC_SHAKE_128, IDC_SHAKE_256,
-      IDC_GROUP_BLAKE, IDC_BLAKE2B, IDC_BLAKE2S,
-      IDC_GROUP_LSH, IDC_LSH_256, IDC_LSH_512,
-      IDC_SM3
-  };
-
-  // Tab 2: HAVAL & RIPEMD
-  // Includes: HAVAL group, RIPEMD group
-  int tab2[] = {
-      IDC_GROUP_HAVAL, IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
-      IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5, IDC_STATIC_HAVAL_PASS,
-      IDC_GROUP_RIPEMD, IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320
-  };
-
-  // Tab 3: Checksum & Others
-  // Includes: Checksum group, Exotic/Misc group (Tiger, Whirlpool)
-  int tab3[] = {
-      IDC_GROUP_CHECKSUM, IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64, IDC_CRC8,
-      IDC_GROUP_MISC, IDC_TIGER, IDC_WHIRLPOOL
-  };
-
-  // Helper to apply show/hide
-  auto apply = [&](const std::vector<int>& ids, bool show) {
-      for (int id : ids) {
-          ::ShowWindow(GetDlgItem(id), show ? SW_SHOW : SW_HIDE);
-      }
-  };
-  
-  // Convert standard arrays to vectors for uniformity
-  std::vector<int> t0(tab0, tab0 + sizeof(tab0)/sizeof(int));
-  std::vector<int> t1(tab1, tab1 + sizeof(tab1)/sizeof(int));
-  std::vector<int> t2(tab2, tab2 + sizeof(tab2)/sizeof(int));
-  std::vector<int> t3(tab3, tab3 + sizeof(tab3)/sizeof(int));
-
-  apply(t0, sel == 0);
-  apply(t1, sel == 1);
-  apply(t2, sel == 2);
-  apply(t3, sel == 3);
-  
-  // Force redraw of the entire dialog to ensure all controls are visible
-  ::InvalidateRect(*this, NULL, FALSE);
-  ::UpdateWindow(*this);
 }
 
 void CHashCalcDialog::OnCancel() {
@@ -409,33 +364,31 @@ void CHashCalcDialog::OnExit() {
 }
 
 void CHashCalcDialog::OnSelectAll() {
-  // Check all hash algorithm checkboxes
-  SetCheckboxStates(s_allAlgorithmIds, s_allAlgorithmCount, true);
-  
-  // HAVAL pass selections
-  const int havalPassIds[] = {IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5};
-  SetCheckboxStates(havalPassIds, 3, true);
-  
+  // Delegate to all views
+  m_viewSHA.SelectAll();
+  m_viewSHA3.SelectAll();
+  m_viewHAVAL.SelectAll();
+  m_viewChecksum.SelectAll();
+
   // Update button states after selection
   UpdateButtonStates();
   // Update tab names with algorithm count
-  UpdateTabDisplay();
+  UpdateTabNames();
   // Save configuration
   SaveConfiguration();
 }
 
 void CHashCalcDialog::OnClearAll() {
-  // Uncheck all hash algorithm checkboxes
-  SetCheckboxStates(s_allAlgorithmIds, s_allAlgorithmCount, false);
-  
-  // HAVAL pass selections
-  const int havalPassIds[] = {IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5};
-  SetCheckboxStates(havalPassIds, 3, false);
-  
+  // Delegate to all views
+  m_viewSHA.ClearAll();
+  m_viewSHA3.ClearAll();
+  m_viewHAVAL.ClearAll();
+  m_viewChecksum.ClearAll();
+
   // Update button states after clearing
   UpdateButtonStates();
   // Update tab names with algorithm count
-  UpdateTabDisplay();
+  UpdateTabNames();
   // Save configuration
   SaveConfiguration();
 }
@@ -443,11 +396,11 @@ void CHashCalcDialog::OnClearAll() {
 void CHashCalcDialog::EnableControls(bool enable) {
   // Determine current input mode
   bool isTextMode = IsDlgButtonChecked(IDC_RADIO_TEXT) == BST_CHECKED;
-  
+
   // Enable/disable input mode radio buttons
   GetDlgItem(IDC_RADIO_TEXT).EnableWindow(enable);
   GetDlgItem(IDC_RADIO_FILE).EnableWindow(enable);
-  
+
   // Enable/disable input controls based on mode
   if (enable) {
     GetDlgItem(IDC_EDIT_TEXT).EnableWindow(isTextMode);
@@ -458,25 +411,24 @@ void CHashCalcDialog::EnableControls(bool enable) {
     GetDlgItem(IDC_EDIT_FILE).EnableWindow(FALSE);
     GetDlgItem(IDC_BUTTON_BROWSE).EnableWindow(FALSE);
   }
-  
-  // Enable/disable all algorithm checkboxes using the refactored helper
-  EnableControlsById(s_allAlgorithmIds, s_allAlgorithmCount, enable);
-  
-  // HAVAL pass selections
-  const int havalPassIds[] = {IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5};
-  EnableControlsById(havalPassIds, 3, enable);
-  
+
+  // Enable/disable tab control
+  m_tabControl.EnableWindow(enable);
+
+  // Enable/disable all views
+  m_viewSHA.EnableControls(enable);
+  m_viewSHA3.EnableControls(enable);
+  m_viewHAVAL.EnableControls(enable);
+  m_viewChecksum.EnableControls(enable);
+
   // Enable/disable Select All and Clear All buttons
   GetDlgItem(IDC_SELECT_ALL).EnableWindow(enable);
   GetDlgItem(IDC_CLEAR_ALL).EnableWindow(enable);
-  
-  // Enable/disable Tab control
-  GetDlgItem(IDC_TAB_MAIN).EnableWindow(enable);
-  
+
   // Enable/disable Exit and About buttons
   GetDlgItem(IDC_BUTTON_EXIT).EnableWindow(enable);
   GetDlgItem(IDC_BUTTON_ABOUT).EnableWindow(enable);
-  
+
   // Stay on Top checkbox always enabled (as requested)
   // IDC_CHECK_STAY_ON_TOP and IDC_BUTTON_CALCULATE are always enabled
 }
@@ -644,29 +596,10 @@ void CHashCalcDialog::OnCalculate() {
       return;
     }
   }
-  
+
   // Check if at least one algorithm is selected
-  bool anySelected = false;
-  int algorithmIDs[] = {
-    IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
-    IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
-    IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
-    IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64, IDC_CRC8,
-    IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
-    IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
-    IDC_SHAKE_128, IDC_SHAKE_256,
-    IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
-    IDC_BLAKE2B, IDC_BLAKE2S,
-    IDC_LSH_256, IDC_LSH_512
-  };
-  
-  for (int id : algorithmIDs) {
-    if (IsDlgButtonChecked(id)) {
-      anySelected = true;
-      break;
-    }
-  }
-  
+  bool anySelected = HasAnyAlgorithmSelected();
+
   if (!anySelected) {
     SetDlgItemText(IDC_EDIT_RESULT, L"Please select at least one hash algorithm.");
     return;
@@ -894,52 +827,53 @@ bool CHashCalcDialog::ValidateFilePath(const std::wstring& filePath, std::wstrin
 }
 
 bool CHashCalcDialog::HasAnyAlgorithmSelected() {
-  int algorithmIDs[] = {
-    IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
-    IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
-    IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5,
-    IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
-    IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64, IDC_CRC8,
-    IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
-    IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
-    IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
-    IDC_SHAKE_128, IDC_SHAKE_256,
-    IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
-    IDC_BLAKE2B, IDC_BLAKE2S,
-    IDC_LSH_256, IDC_LSH_512
-  };
-  
-  for (int id : algorithmIDs) {
-    if (IsDlgButtonChecked(id)) {
-      return true;
-    }
+  // Check if views are created
+  if (!m_viewSHA.GetHwnd() || !m_viewSHA3.GetHwnd() ||
+      !m_viewHAVAL.GetHwnd() || !m_viewChecksum.GetHwnd()) {
+    return false;
   }
-  
+
+  // Check if any view has selected algorithms
+  if (m_viewSHA.CountSelectedAlgorithms() > 0) return true;
+  if (m_viewSHA3.CountSelectedAlgorithms() > 0) return true;
+  if (m_viewHAVAL.CountSelectedAlgorithms() > 0) return true;
+  if (m_viewChecksum.CountSelectedAlgorithms() > 0) return true;
+
+  // Check HAVAL passes
+  bool pass3, pass4, pass5;
+  m_viewHAVAL.GetHavalPassStates(pass3, pass4, pass5);
+  if (pass3 || pass4 || pass5) return true;
+
   return false;
 }
 
 bool CHashCalcDialog::HasAllAlgorithmsSelected() {
-  int algorithmIDs[] = {
-    IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
-    IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
-    IDC_HAVAL_PASS3, IDC_HAVAL_PASS4, IDC_HAVAL_PASS5,
-    IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
-    IDC_MD2, IDC_MD4, IDC_MD5, IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64, IDC_CRC8,
-    IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
-    IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
-    IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
-    IDC_SHAKE_128, IDC_SHAKE_256,
-    IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
-    IDC_BLAKE2B, IDC_BLAKE2S,
-    IDC_LSH_256, IDC_LSH_512
-  };
-  
-  for (int id : algorithmIDs) {
-    if (!IsDlgButtonChecked(id)) {
+  // Collect all algorithm states from all views
+  std::map<int, bool> allStates;
+  auto states1 = m_viewSHA.GetAlgorithmStates();
+  auto states2 = m_viewSHA3.GetAlgorithmStates();
+  auto states3 = m_viewHAVAL.GetAlgorithmStates();
+  auto states4 = m_viewChecksum.GetAlgorithmStates();
+
+  allStates.insert(states1.begin(), states1.end());
+  allStates.insert(states2.begin(), states2.end());
+  allStates.insert(states3.begin(), states3.end());
+  allStates.insert(states4.begin(), states4.end());
+
+  // Check if all algorithms are selected
+  for (const auto& pair : allStates) {
+    if (!pair.second) {
       return false;
     }
   }
-  
+
+  // Check HAVAL passes
+  bool pass3, pass4, pass5;
+  m_viewHAVAL.GetHavalPassStates(pass3, pass4, pass5);
+  if (!pass3 || !pass4 || !pass5) {
+    return false;
+  }
+
   return true;
 }
 
@@ -953,86 +887,6 @@ bool CHashCalcDialog::HasValidInput() {
     CString wFilePath = GetDlgItemText(IDC_EDIT_FILE);
     return !wFilePath.IsEmpty();
   }
-}
-
-int CHashCalcDialog::CountSelectedAlgorithmsForTab(int tabIndex) {
-  int count = 0;
-  
-  // Tab 0: SHA & MD
-  if (tabIndex == 0) {
-    int tab0Algos[] = {
-      IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
-      IDC_MD2, IDC_MD4, IDC_MD5,
-      IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512
-    };
-    for (int id : tab0Algos) {
-      if (IsDlgButtonChecked(id)) {
-        count++;
-      }
-    }
-  }
-  // Tab 1: SHA-3 & Modern
-  else if (tabIndex == 1) {
-    int tab1Algos[] = {
-      IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
-      IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
-      IDC_SHAKE_128, IDC_SHAKE_256,
-      IDC_BLAKE2B, IDC_BLAKE2S,
-      IDC_LSH_256, IDC_LSH_512,
-      IDC_SM3
-    };
-    for (int id : tab1Algos) {
-      if (IsDlgButtonChecked(id)) {
-        count++;
-      }
-    }
-  }
-  // Tab 2: HAVAL & RIPEMD
-  else if (tabIndex == 2) {
-    // HAVAL algorithms - count by combinations of bit sizes and passes
-    int havalBits[] = {IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256};
-    
-    // Count selected passes
-    std::vector<int> selectedPasses;
-    if (IsDlgButtonChecked(IDC_HAVAL_PASS3)) selectedPasses.push_back(3);
-    if (IsDlgButtonChecked(IDC_HAVAL_PASS4)) selectedPasses.push_back(4);
-    if (IsDlgButtonChecked(IDC_HAVAL_PASS5)) selectedPasses.push_back(5);
-    
-    // If no pass is selected, default to 3-pass (as per the calculation logic)
-    if (selectedPasses.empty()) {
-      selectedPasses.push_back(3);
-    }
-    
-    // Count HAVAL combinations
-    for (int bitId : havalBits) {
-      if (IsDlgButtonChecked(bitId)) {
-        // Each checked bit size counts for each selected pass
-        count += selectedPasses.size();
-      }
-    }
-    
-    // RIPEMD algorithms
-    int ripemdAlgos[] = {IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320};
-    for (int id : ripemdAlgos) {
-      if (IsDlgButtonChecked(id)) {
-        count++;
-      }
-    }
-  }
-  // Tab 3: Checksum & Others
-  else if (tabIndex == 3) {
-    int tab3Algos[] = {
-      IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64, IDC_CRC8,
-      IDC_TIGER, IDC_WHIRLPOOL
-    };
-    for (int id : tab3Algos) {
-      if (IsDlgButtonChecked(id)) {
-        count++;
-      }
-    }
-  }
-  
-  return count;
 }
 
 void CHashCalcDialog::UpdateButtonStates() {
@@ -1058,10 +912,10 @@ void CHashCalcDialog::UpdateButtonStates() {
 void CHashCalcDialog::LoadConfiguration() {
   // Initialize configuration manager
   m_configManager.Initialize();
-  
+
   // Load configuration from file
   m_configManager.LoadConfig();
-  
+
   // Apply input mode (Text or File)
   bool isFileMode = m_configManager.GetInputMode();
   if (isFileMode) {
@@ -1075,7 +929,7 @@ void CHashCalcDialog::LoadConfiguration() {
     GetDlgItem(IDC_EDIT_FILE).EnableWindow(FALSE);
     GetDlgItem(IDC_BUTTON_BROWSE).EnableWindow(FALSE);
   }
-  
+
   // Apply Stay on Top setting
   bool stayOnTop = m_configManager.GetStayOnTop();
   CheckDlgButton(IDC_CHECK_STAY_ON_TOP, stayOnTop ? BST_CHECKED : BST_UNCHECKED);
@@ -1083,57 +937,58 @@ void CHashCalcDialog::LoadConfiguration() {
     HWND hwnd = *this;
     ::SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
   }
-  
-  // Apply algorithm selections
+
+  // Apply algorithm selections to views
   auto algorithms = m_configManager.GetAllAlgorithms();
-  for (const auto& pair : algorithms) {
-    CheckDlgButton(pair.first, pair.second ? BST_CHECKED : BST_UNCHECKED);
-  }
-  
+  m_viewSHA.SetAlgorithmStates(algorithms);
+  m_viewSHA3.SetAlgorithmStates(algorithms);
+  m_viewHAVAL.SetAlgorithmStates(algorithms);
+  m_viewChecksum.SetAlgorithmStates(algorithms);
+
   // Apply HAVAL pass selections (can be multiple)
-  CheckDlgButton(IDC_HAVAL_PASS3, m_configManager.GetHavalPass3() ? BST_CHECKED : BST_UNCHECKED);
-  CheckDlgButton(IDC_HAVAL_PASS4, m_configManager.GetHavalPass4() ? BST_CHECKED : BST_UNCHECKED);
-  CheckDlgButton(IDC_HAVAL_PASS5, m_configManager.GetHavalPass5() ? BST_CHECKED : BST_UNCHECKED);
-  
+  m_viewHAVAL.SetHavalPassStates(
+    m_configManager.GetHavalPass3(),
+    m_configManager.GetHavalPass4(),
+    m_configManager.GetHavalPass5()
+  );
+
   // Update tab display with loaded configuration
-  UpdateTabDisplay();
+  UpdateTabNames();
 }
 
 void CHashCalcDialog::SaveConfiguration() {
   // Save input mode
   bool isFileMode = IsDlgButtonChecked(IDC_RADIO_FILE) == BST_CHECKED;
   m_configManager.SetInputMode(isFileMode);
-  
+
   // Save Stay on Top setting
   bool stayOnTop = IsDlgButtonChecked(IDC_CHECK_STAY_ON_TOP) == BST_CHECKED;
   m_configManager.SetStayOnTop(stayOnTop);
-  
+
+  // Collect algorithm states from all views
+  std::map<int, bool> allStates;
+  auto states1 = m_viewSHA.GetAlgorithmStates();
+  auto states2 = m_viewSHA3.GetAlgorithmStates();
+  auto states3 = m_viewHAVAL.GetAlgorithmStates();
+  auto states4 = m_viewChecksum.GetAlgorithmStates();
+
+  allStates.insert(states1.begin(), states1.end());
+  allStates.insert(states2.begin(), states2.end());
+  allStates.insert(states3.begin(), states3.end());
+  allStates.insert(states4.begin(), states4.end());
+
   // Save algorithm selections
-  int allAlgorithmIds[] = {
-    IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
-    IDC_MD2, IDC_MD4, IDC_MD5,
-    IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
-    IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
-    IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
-    IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
-    IDC_CRC32, IDC_ADLER32, IDC_CRC16, IDC_CRC32C, IDC_CRC64, IDC_CRC8,
-    IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
-    IDC_SHAKE_128, IDC_SHAKE_256,
-    IDC_TIGER, IDC_SM3, IDC_WHIRLPOOL,
-    IDC_BLAKE2B, IDC_BLAKE2S,
-    IDC_LSH_256, IDC_LSH_512
-  };
-  
-  for (int id : allAlgorithmIds) {
-    bool enabled = IsDlgButtonChecked(id) == BST_CHECKED;
-    m_configManager.SetAlgorithmEnabled(id, enabled);
+  for (const auto& pair : allStates) {
+    m_configManager.SetAlgorithmEnabled(pair.first, pair.second);
   }
-  
+
   // Save HAVAL pass selections (can be multiple)
-  m_configManager.SetHavalPass3(IsDlgButtonChecked(IDC_HAVAL_PASS3) == BST_CHECKED);
-  m_configManager.SetHavalPass4(IsDlgButtonChecked(IDC_HAVAL_PASS4) == BST_CHECKED);
-  m_configManager.SetHavalPass5(IsDlgButtonChecked(IDC_HAVAL_PASS5) == BST_CHECKED);
-  
+  bool pass3, pass4, pass5;
+  m_viewHAVAL.GetHavalPassStates(pass3, pass4, pass5);
+  m_configManager.SetHavalPass3(pass3);
+  m_configManager.SetHavalPass4(pass4);
+  m_configManager.SetHavalPass5(pass5);
+
   // Write to INI file
   m_configManager.SaveConfig();
 }
@@ -1153,6 +1008,23 @@ void CHashCalcDialog::EnableControlsById(const int* ids, size_t count, bool enab
   for (size_t i = 0; i < count; ++i) {
     GetDlgItem(ids[i]).EnableWindow(enable);
   }
+}
+
+bool CHashCalcDialog::IsAlgorithmSelected(int algorithmId) {
+  // Collect all algorithm states from all views
+  std::map<int, bool> allStates;
+  auto states1 = m_viewSHA.GetAlgorithmStates();
+  auto states2 = m_viewSHA3.GetAlgorithmStates();
+  auto states3 = m_viewHAVAL.GetAlgorithmStates();
+  auto states4 = m_viewChecksum.GetAlgorithmStates();
+
+  allStates.insert(states1.begin(), states1.end());
+  allStates.insert(states2.begin(), states2.end());
+  allStates.insert(states3.begin(), states3.end());
+  allStates.insert(states4.begin(), states4.end());
+
+  auto it = allStates.find(algorithmId);
+  return (it != allStates.end() && it->second);
 }
 
 void CHashCalcDialog::ComputeHashAlgorithmsForText(
@@ -1204,7 +1076,7 @@ void CHashCalcDialog::ComputeHashAlgorithmsForText(
 
   // Helper to check ID and compute
   auto checkAndCompute = [&](int id, const std::string &algoName, const std::string& displayName) {
-    if (IsDlgButtonChecked(id)) {
+    if (IsAlgorithmSelected(id)) {
       computeAlgo(algoName, displayName);
     }
   };
@@ -1358,7 +1230,7 @@ void CHashCalcDialog::ComputeHashAlgorithmsForFile(
 
   // Helper to check ID and compute
   auto checkAndCompute = [&](int id, const std::string &algoName, const std::string& displayName) {
-    if (IsDlgButtonChecked(id)) {
+    if (IsAlgorithmSelected(id)) {
       computeAlgo(algoName, displayName);
     }
   };

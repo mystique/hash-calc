@@ -3,6 +3,11 @@
 
 #include "../../res/resource.h"
 #include "wxx_dialog.h"
+#include "wxx_tab.h"
+#include "TabViewSHA.h"
+#include "TabViewSHA3.h"
+#include "TabViewHAVAL.h"
+#include "TabViewChecksum.h"
 #include "../utils/ConfigManager.h"
 #include <atomic>
 #include <memory>
@@ -36,8 +41,8 @@ protected:
   virtual BOOL PreTranslateMessage(MSG& msg);
 
 private:
-  void UpdateTabDisplay(); // Added
-  int CountSelectedAlgorithmsForTab(int tabIndex); // Count selected algorithms for a specific tab
+  void UpdateTabNames(); // Replaces UpdateTabDisplay() - only updates tab text with counts
+  bool IsAlgorithmSelected(int algorithmId); // Check if an algorithm is selected in any view
   void EnableControls(bool enable);
   void DisableControlsForCalculation();
   void PerformHashCalculation();
@@ -76,7 +81,14 @@ private:
   void SaveConfiguration();
 
   CFont m_fontResult;
-  
+
+  // Win32++ Tab Control and Views
+  Win32xx::CTab m_tabControl;
+  CTabViewSHA m_viewSHA;
+  CTabViewSHA3 m_viewSHA3;
+  CTabViewHAVAL m_viewHAVAL;
+  CTabViewChecksum m_viewChecksum;
+
   // Thread management
   HANDLE m_hCalcThread;
   std::atomic<bool> m_bCancelCalculation;
