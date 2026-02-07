@@ -23,6 +23,17 @@ namespace core {
 
 // Custom message for hash calculation completion
 #define WM_HASH_COMPLETE (WM_USER + 1)
+// Custom message for progress update
+#define WM_HASH_PROGRESS (WM_USER + 2)
+
+// Structure for progress update data
+struct ProgressData {
+  std::wstring algorithmName;
+  uint64_t bytesProcessed;
+  uint64_t totalBytes;
+  int algorithmIndex;  // Current algorithm being processed
+  int totalAlgorithms; // Total number of algorithms to process
+};
 
 class CHashCalcDialog : public Win32xx::CDialog {
 public:
@@ -47,8 +58,10 @@ private:
   void DisableControlsForCalculation();
   void PerformHashCalculation();
   void ShowProgressBar(bool show);
-  void UpdateButtonStates(); // Added for control logic
+  void UpdateProgress(const ProgressData& data); // Update progress bar and text
   void SetTaskbarProgress(TBPFLAG state); // Set taskbar progress state
+  void SetTaskbarProgressValue(uint64_t completed, uint64_t total); // Set taskbar progress value
+  void UpdateButtonStates(); // Added for control logic
   bool HasAnyAlgorithmSelected(); // Check if any algorithm is selected
   bool HasAllAlgorithmsSelected(); // Check if all algorithms are selected
   bool HasValidInput(); // Check if input is valid
@@ -102,6 +115,12 @@ private:
   HANDLE m_hCalcThread;
   std::atomic<bool> m_bCancelCalculation;
   bool m_bIsCalculating;
+
+  // Progress tracking
+  std::wstring m_currentAlgorithm;
+  int m_currentAlgorithmIndex;
+  int m_totalAlgorithms;
+  int m_lastReportedPercentage; // Last reported progress percentage for throttling
 
   // Configuration manager
   ConfigManager m_configManager;

@@ -40,7 +40,10 @@ CHashCalcDialog::CHashCalcDialog()
     m_pViewSHA(nullptr),
     m_pViewSHA3(nullptr),
     m_pViewHAVAL(nullptr),
-    m_pViewChecksum(nullptr) {
+    m_pViewChecksum(nullptr),
+    m_currentAlgorithmIndex(0),
+    m_totalAlgorithms(0),
+    m_lastReportedPercentage(-1) {
   // Initialize NOTIFYICONDATA structure
   ZeroMemory(&m_nid, sizeof(m_nid));
 }
@@ -150,10 +153,10 @@ BOOL CHashCalcDialog::OnInitDialog() {
   // Update tab names with initial counts
   UpdateTabNames();
 
-  // Initialize progress bar (marquee style, initially hidden)
+  // Initialize progress bar (normal style, initially hidden)
   HWND hProgress = GetDlgItem(IDC_PROGRESS_CALC);
-  ::SendMessage(hProgress, PBM_SETMARQUEE, 0, 0);
-  ::SetWindowLong(hProgress, GWL_STYLE, ::GetWindowLong(hProgress, GWL_STYLE) | PBS_MARQUEE);
+  ::SendMessage(hProgress, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+  ::SendMessage(hProgress, PBM_SETPOS, 0, 0);
 
   // Enable drag and drop for files
   DragAcceptFiles(TRUE);
@@ -362,27 +365,40 @@ INT_PTR CHashCalcDialog::DialogProc(UINT uMsg, WPARAM wParam, LPARAM lParam) {
       SetDlgItemText(IDC_EDIT_RESULT, pResult->c_str());
       delete pResult;
     }
-    
+
     // Re-enable controls
     EnableControls(true);
     SetDlgItemText(IDC_BUTTON_CALCULATE, L"Calculate");
     ::InvalidateRect(GetDlgItem(IDC_BUTTON_CALCULATE), NULL, TRUE);
     m_bIsCalculating = false;
-    
+
     // Hide progress bar
     ShowProgressBar(false);
-    
+
     // Clear taskbar progress
     SetTaskbarProgress(TBPF_NOPROGRESS);
-    
+
+    // Reset window title
+    SetWindowText(L"Hash Calculator");
+
     // Update button states after calculation completes
     UpdateButtonStates();
-    
+
     if (m_hCalcThread) {
       CloseHandle(m_hCalcThread);
       m_hCalcThread = NULL;
     }
-    
+
+    return TRUE;
+  }
+
+  // Handle progress update
+  if (uMsg == WM_HASH_PROGRESS) {
+    ProgressData* pData = reinterpret_cast<ProgressData*>(wParam);
+    if (pData) {
+      UpdateProgress(*pData);
+      delete pData;
+    }
     return TRUE;
   }
   
@@ -545,6 +561,26 @@ DWORD WINAPI CHashCalcDialog::CalculateHashThread(LPVOID lpParam) {
 }
 
 void CHashCalcDialog::PerformHashCalculation() {
+  // Count total algorithms to process
+  m_totalAlgorithms = 0;
+  m_currentAlgorithmIndex = 0;
+  m_lastReportedPercentage = -1; // Reset progress tracking
+
+  // Count selected algorithms from all views
+  m_totalAlgorithms += m_pViewSHA->CountSelectedAlgorithms();
+  m_totalAlgorithms += m_pViewSHA3->CountSelectedAlgorithms();
+  m_totalAlgorithms += m_pViewChecksum->CountSelectedAlgorithms();
+
+  // For HAVAL, count based on selected passes
+  int havalAlgorithms = m_pViewHAVAL->CountSelectedAlgorithms();
+  if (havalAlgorithms > 0) {
+    bool pass3, pass4, pass5;
+    m_pViewHAVAL->GetHavalPassStates(pass3, pass4, pass5);
+    int passCount = (pass3 ? 1 : 0) + (pass4 ? 1 : 0) + (pass5 ? 1 : 0);
+    if (passCount == 0) passCount = 1; // Default to 3-pass
+    m_totalAlgorithms += havalAlgorithms * passCount;
+  }
+
   // Determine input source
   if (IsDlgButtonChecked(IDC_RADIO_TEXT)) {
     // Get text from edit control
@@ -719,9 +755,9 @@ void CHashCalcDialog::OnCalculate() {
   
   // Show progress bar
   ShowProgressBar(true);
-  
-  // Set taskbar progress to indeterminate state
-  SetTaskbarProgress(TBPF_INDETERMINATE);
+
+  // Set taskbar progress to normal state
+  SetTaskbarProgress(TBPF_NORMAL);
   
   // Create calculation thread
   m_hCalcThread = CreateThread(
@@ -814,10 +850,60 @@ void CHashCalcDialog::ShowProgressBar(bool show) {
   HWND hProgress = GetDlgItem(IDC_PROGRESS_CALC);
   if (show) {
     ::ShowWindow(hProgress, SW_SHOW);
-    ::SendMessage(hProgress, PBM_SETMARQUEE, TRUE, 30); // Start marquee animation
   } else {
-    ::SendMessage(hProgress, PBM_SETMARQUEE, FALSE, 0); // Stop marquee animation
+    ::SendMessage(hProgress, PBM_SETPOS, 0, 0);
     ::ShowWindow(hProgress, SW_HIDE);
+  }
+}
+
+void CHashCalcDialog::UpdateProgress(const ProgressData& data) {
+  HWND hProgress = GetDlgItem(IDC_PROGRESS_CALC);
+
+  // Calculate overall progress percentage based on algorithm completion
+  int percentage = 0;
+  if (data.totalAlgorithms > 0) {
+    // Each algorithm contributes equally to the total progress
+    // Progress = (completed algorithms + current algorithm progress) / total algorithms * 100
+
+    double completedAlgorithms = (data.algorithmIndex > 0) ? (data.algorithmIndex - 1) : 0;
+
+    // Current algorithm's progress (0.0 to 1.0)
+    double currentAlgorithmProgress = 0.0;
+    if (data.totalBytes > 0) {
+      currentAlgorithmProgress = static_cast<double>(data.bytesProcessed) / data.totalBytes;
+    }
+
+    // Total progress: (completed + current) / total * 100
+    percentage = static_cast<int>((completedAlgorithms + currentAlgorithmProgress) * 100.0 / data.totalAlgorithms);
+
+    if (percentage > 100) percentage = 100;
+    if (percentage < 0) percentage = 0;
+  }
+
+  // Throttle UI updates - only update if percentage changed
+  if (percentage == m_lastReportedPercentage) {
+    return; // Skip update if percentage hasn't changed
+  }
+  m_lastReportedPercentage = percentage;
+
+  // Update progress bar
+  ::SendMessage(hProgress, PBM_SETPOS, percentage, 0);
+
+  // Update taskbar progress
+  SetTaskbarProgressValue(percentage, 100);
+
+  // Update window title with progress and algorithm name
+  std::wstringstream title;
+  title << L"Hash Calculator - [" << percentage << L"%] " << data.algorithmName;
+  if (data.totalAlgorithms > 1) {
+    title << L" (" << data.algorithmIndex << L"/" << data.totalAlgorithms << L")";
+  }
+  SetWindowText(title.str().c_str());
+}
+
+void CHashCalcDialog::SetTaskbarProgressValue(uint64_t completed, uint64_t total) {
+  if (m_pTaskbarList) {
+    m_pTaskbarList->SetProgressValue(*this, completed, total);
   }
 }
 
@@ -1177,6 +1263,7 @@ void CHashCalcDialog::ComputeHashAlgorithmsForText(
   // Helper to check ID and compute
   auto checkAndCompute = [&](int id, const std::string &algoName, const std::string& displayName) {
     if (IsAlgorithmSelected(id)) {
+      m_currentAlgorithmIndex++;
       computeAlgo(algoName, displayName);
     }
   };
@@ -1232,6 +1319,7 @@ void CHashCalcDialog::ComputeHashAlgorithmsForText(
   // Compute for each selected pass count
   auto checkAndComputeHaval = [&](int id, int bits, int passes) {
     if (IsAlgorithmSelected(id)) {
+      m_currentAlgorithmIndex++;
       std::stringstream algoName, displayName;
       algoName << "HAVAL-" << bits << "/Pass" << passes;
       displayName << "HAVAL-" << bits << "/" << passes;
@@ -1286,28 +1374,62 @@ void CHashCalcDialog::ComputeHashAlgorithmsForText(
 }
 
 void CHashCalcDialog::ComputeHashAlgorithmsForFile(
-    std::wstringstream& output, 
+    std::wstringstream& output,
     bool& anyComputed,
     const std::wstring& filePath) {
-  
+
   // Helper to compute a specific algorithm by name for file
   auto computeAlgo = [&](const std::string &algoName, const std::string &displayName) {
     // Check for cancellation
     if (m_bCancelCalculation.load()) {
       return;
     }
-    
+
     try {
       if (core::HashAlgorithmFactory::isAvailable(algoName)) {
         auto algo = core::HashAlgorithmFactory::create(algoName);
         // Set cancel callback
         algo->setCancelCallback([this]() { return m_bCancelCalculation.load(); });
+
+        // Set progress callback
+        algo->setProgressCallback([this, displayName](uint64_t bytesProcessed, uint64_t totalBytes) {
+          ProgressData* pData = new ProgressData();
+          pData->algorithmName = std::wstring(displayName.begin(), displayName.end());
+          pData->bytesProcessed = bytesProcessed;
+          pData->totalBytes = totalBytes;
+          pData->algorithmIndex = m_currentAlgorithmIndex;
+          pData->totalAlgorithms = m_totalAlgorithms;
+          PostMessage(WM_HASH_PROGRESS, reinterpret_cast<WPARAM>(pData), 0);
+        });
+
+        // Send progress update at algorithm start (0%)
+        {
+          ProgressData* pData = new ProgressData();
+          pData->algorithmName = std::wstring(displayName.begin(), displayName.end());
+          pData->bytesProcessed = 0;
+          pData->totalBytes = 1; // Avoid division by zero
+          pData->algorithmIndex = m_currentAlgorithmIndex;
+          pData->totalAlgorithms = m_totalAlgorithms;
+          PostMessage(WM_HASH_PROGRESS, reinterpret_cast<WPARAM>(pData), 0);
+        }
+
         auto digest = algo->computeFile(filePath);
-        
+
+        // Send progress update at algorithm completion (100%)
+        {
+          ProgressData* pData = new ProgressData();
+          pData->algorithmName = std::wstring(displayName.begin(), displayName.end());
+          pData->bytesProcessed = 1;
+          pData->totalBytes = 1; // 100%
+          pData->algorithmIndex = m_currentAlgorithmIndex;
+          pData->totalAlgorithms = m_totalAlgorithms;
+          PostMessage(WM_HASH_PROGRESS, reinterpret_cast<WPARAM>(pData), 0);
+        }
+
         // Format: Algorithm Name (padded) : Hash Value
         std::wstring wDisplayName(displayName.begin(), displayName.end());
-        
-        output << std::left << std::setw(12) << wDisplayName << L": " 
+
+        output << std::left << std::setw(12) << wDisplayName << L": "
                << core::IHashAlgorithm::toHexWString(digest, true) << L"\r\n";
         anyComputed = true;
       } else {
@@ -1335,6 +1457,7 @@ void CHashCalcDialog::ComputeHashAlgorithmsForFile(
   // Helper to check ID and compute
   auto checkAndCompute = [&](int id, const std::string &algoName, const std::string& displayName) {
     if (IsAlgorithmSelected(id)) {
+      m_currentAlgorithmIndex++;
       computeAlgo(algoName, displayName);
     }
   };
@@ -1390,6 +1513,7 @@ void CHashCalcDialog::ComputeHashAlgorithmsForFile(
   // Compute for each selected pass count
   auto checkAndComputeHaval = [&](int id, int bits, int passes) {
     if (IsAlgorithmSelected(id)) {
+      m_currentAlgorithmIndex++;
       std::stringstream algoName, displayName;
       algoName << "HAVAL-" << bits << "/Pass" << passes;
       displayName << "HAVAL-" << bits << "/" << passes;

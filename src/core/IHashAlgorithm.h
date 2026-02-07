@@ -26,6 +26,11 @@ public:
     /// @return true if operation should be cancelled
     using CancelCallback = std::function<bool()>;
 
+    /// @brief Callback function type for progress reporting
+    /// @param bytesProcessed Number of bytes processed so far
+    /// @param totalBytes Total number of bytes to process (0 if unknown)
+    using ProgressCallback = std::function<void(uint64_t bytesProcessed, uint64_t totalBytes)>;
+
     virtual ~IHashAlgorithm() = default;
 
     /// @return Algorithm name (e.g., "SHA-256", "MD5")
@@ -56,6 +61,10 @@ public:
     /// @param callback Function to check if operation should be cancelled
     void setCancelCallback(CancelCallback callback) { m_cancelCallback = callback; }
 
+    /// @brief Set progress callback
+    /// @param callback Function to report progress updates
+    void setProgressCallback(ProgressCallback callback) { m_progressCallback = callback; }
+
     /// @brief Convert digest to hex string
     static std::string toHexString(const std::vector<uint8_t>& digest, bool uppercase = false);
 
@@ -75,6 +84,9 @@ public:
 protected:
     /// @brief Callback for cancellation check
     CancelCallback m_cancelCallback;
+
+    /// @brief Callback for progress reporting
+    ProgressCallback m_progressCallback;
 };
 
 } // namespace core
