@@ -4,8 +4,8 @@
 IDI_APP_ICON ICON "app.ico"
 
 1 VERSIONINFO
- FILEVERSION 0,1,0,0
- PRODUCTVERSION 0,1,0,0
+ FILEVERSION 1,2,1,0
+ PRODUCTVERSION 1,2,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -22,12 +22,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "gog.one"
             VALUE "FileDescription", "Hash Calculator"
-            VALUE "FileVersion", "0.1.0.0"
+            VALUE "FileVersion", "1.2.1.0"
             VALUE "InternalName", "HashCalc.exe"
-            VALUE "LegalCopyright", "Copyright (C) 2026 gog.one. All rights reserved."
+            VALUE "LegalCopyright", "Copyright (C) 2026 gog.one"
             VALUE "OriginalFilename", "HashCalc.exe"
             VALUE "ProductName", "Hash Calculator"
-            VALUE "ProductVersion", "0.1.0.0"
+            VALUE "ProductVersion", "1.2.1.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -58,6 +58,9 @@ BEGIN
 
     // Result display area
     EDITTEXT        IDC_EDIT_RESULT,7,122,374,90,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY
+
+    // Separator line
+    CONTROL         "",IDC_SEPARATOR_MAIN,"Static",SS_ETCHEDHORZ,7,216,374,1
 
     // Bottom buttons
     AUTOCHECKBOX    "Stay on top",IDC_CHECK_STAY_ON_TOP,7,222,55,10
@@ -165,5 +168,36 @@ BEGIN
     AUTOCHECKBOX    "LSH-256",IDC_LSH_256,137,28,38,10
     AUTOCHECKBOX    "SM3",IDC_SM3,224,15,26,10
     AUTOCHECKBOX    "LSH-512",IDC_LSH_512,179,28,38,10
+END
+
+// About Dialog
+IDD_ABOUT_DIALOG DIALOGEX 0, 0, 260, 135
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About..."
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    ICON            IDI_APP_ICON,IDC_ABOUT_ICON,10,10,20,20
+    LTEXT           "",IDC_ABOUT_APPNAME,38,10,130,10,SS_NOPREFIX
+    RTEXT           "",IDC_ABOUT_VERSION,170,10,83,10,SS_NOPREFIX
+    LTEXT           "",IDC_ABOUT_COPYRIGHT,38,22,215,10,SS_NOPREFIX
+
+    GROUPBOX        "Contact information",-1,7,38,246,26
+    LTEXT           "Web",IDC_ABOUT_WEB_LABEL,14,49,20,10,SS_SUNKEN | SS_CENTER
+    LTEXT           "[",-1,40,49,6,10
+    CONTROL         "<a href=""https://github.com/mystique/hash-calc"">github.com/mystique/hash-calc</a>",IDC_ABOUT_WEB_LINK,"SysLink",WS_TABSTOP,46,49,118,10
+    LTEXT           "]",-1,144,49,6,10
+    LTEXT           "E-mail",IDC_ABOUT_EMAIL_LABEL,180,49,25,10,SS_SUNKEN | SS_CENTER
+    LTEXT           "[ N/A ]",IDC_ABOUT_EMAIL_LINK,210,49,35,10
+
+    GROUPBOX        "Greetings to",-1,7,68,246,26
+    LTEXT           "Crypto++ team, BLAKE3 authors, and the open source community",IDC_ABOUT_GREETINGS,14,79,235,10
+
+    LTEXT           "Coded in C++",-1,7,100,50,10
+    RTEXT           "",IDC_ABOUT_TECH_INFO,60,100,193,10
+
+    // Separator line
+    CONTROL         "",IDC_SEPARATOR_ABOUT,"Static",SS_ETCHEDHORZ,7,111,246,1
+
+    PUSHBUTTON      "OK",IDC_ABOUT_OK,203,115,50,14
 END
 

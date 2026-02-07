@@ -1,4 +1,5 @@
 #include "HashCalcDialog.h"
+#include "AboutDialog.h"
 #include "HoverButton.h"
 #include "utils/EditUtils.h"
 #include <Commdlg.h>
@@ -782,9 +783,8 @@ void CHashCalcDialog::OnCalculate() {
 }
 
 void CHashCalcDialog::OnAbout() {
-  MessageBox(L"Hash Calculator\nVersion 1.0\n\nA simple hash calculator for "
-             L"multiple algorithms.",
-             L"About", MB_OK | MB_ICONINFORMATION);
+  CAboutDialog aboutDlg;
+  aboutDlg.DoModal(*this);
 }
 
 void CHashCalcDialog::OnBrowse() {

@@ -3,7 +3,8 @@
 
 // Dialog ID
 #define IDD_MAIN_DIALOG 101
-#define IDI_APP_ICON 102
+#define IDD_ABOUT_DIALOG 102
+#define IDI_APP_ICON 103
 
 // Tab View Dialog IDs
 #define IDD_TAB_VIEW_SHA 201
@@ -150,5 +151,22 @@
 #define IDM_TRAY_RESTORE 7001
 #define IDM_TRAY_STOP 7002
 #define IDM_TRAY_EXIT 7003
+
+// ========== About Dialog ==========
+#define IDC_ABOUT_ICON 8001
+#define IDC_ABOUT_APPNAME 8002
+#define IDC_ABOUT_VERSION 8003
+#define IDC_ABOUT_COPYRIGHT 8004
+#define IDC_ABOUT_WEB_LABEL 8005
+#define IDC_ABOUT_WEB_LINK 8006
+#define IDC_ABOUT_EMAIL_LABEL 8007
+#define IDC_ABOUT_EMAIL_LINK 8008
+#define IDC_ABOUT_TECH_INFO 8009
+#define IDC_ABOUT_GREETINGS 8010
+#define IDC_ABOUT_OK 8011
+
+// ========== Separators ==========
+#define IDC_SEPARATOR_MAIN 9001
+#define IDC_SEPARATOR_ABOUT 9002
 
 #endif // RESOURCE_H

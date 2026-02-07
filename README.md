@@ -114,6 +114,11 @@ HashCalc supports **50+ cryptographic algorithms** organized into 4 categories:
   - Left-click or double-click tray icon to restore window
   - Right-click for context menu (Restore, Stop, Exit)
   - Automatic minimize-to-tray on window minimize
+- **About Dialog**: Professional about dialog with version information
+  - Displays application version from resource file
+  - Shows build date and copyright information
+  - Includes technology stack information (Win32++, Crypto++, BLAKE3, MD6, HAVAL)
+  - Provides GitHub repository link and contact information
 - **Stay on Top**: Keep the window visible while working with other applications
 - **Progress Bar**: Visual progress indicator with Windows taskbar integration
 - **Batch Operations**: Select multiple algorithms and compute all at once
@@ -316,6 +321,7 @@ The application follows a clean, layered architecture with clear separation of c
 | **HashAlgorithmFactory** | Factory pattern for creating hash algorithm instances with automatic registration |
 | **IHashAlgorithm** | Abstract interface defining the contract for all hash algorithm implementations |
 | **HashCalcDialog** | Main UI window handling user interactions, file operations, threading, and system tray |
+| **AboutDialog** | About dialog displaying version information, build date, copyright, and contact details |
 | **CTab** | Win32++ tab control managing the four algorithm category views |
 | **TabViewBase** | Base class for tab views providing common functionality and algorithm management |
 | **TabView Classes** | Separate dialog views for each algorithm category (SHA, SHA3, HAVAL, Checksum) |
@@ -467,6 +473,7 @@ hash-calc/
     │
     ├── 📁 ui/                     # User interface components
     │   ├── HashCalcDialog.{h,cpp}     # Main dialog window
+    │   ├── AboutDialog.{h,cpp}        # About dialog window
     │   ├── TabViewBase.{h,cpp}        # Base class for tab views
     │   ├── TabViewSHA.{h,cpp}         # SHA & MD Family tab view
     │   ├── TabViewSHA3.{h,cpp}        # SHA-3 & Modern tab view
