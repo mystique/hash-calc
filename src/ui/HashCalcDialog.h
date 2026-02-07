@@ -40,6 +40,9 @@ public:
   CHashCalcDialog();
   virtual ~CHashCalcDialog() override;
 
+  // Set command line argument (file path or text)
+  void SetCommandLineInput(const std::wstring& input);
+
 protected:
   // Virtual function overrides
   virtual BOOL OnInitDialog() override;
@@ -135,6 +138,9 @@ private:
   // Icon handle (shared resource, don't destroy)
   // Must be destroyed AFTER m_nid since m_nid.hIcon points to it
   HICON m_hAppIcon;
+
+  // Command line input (file path or text)
+  std::wstring m_cmdLineInput;
 };
 
 #endif // HASH_CALC_DIALOG_H

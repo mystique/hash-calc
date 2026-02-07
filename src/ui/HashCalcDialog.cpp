@@ -61,6 +61,10 @@ CHashCalcDialog::~CHashCalcDialog() {
   RemoveTrayIcon();
 }
 
+void CHashCalcDialog::SetCommandLineInput(const std::wstring& input) {
+  m_cmdLineInput = input;
+}
+
 BOOL CHashCalcDialog::PreTranslateMessage(MSG& msg) {
   // Handle Enter key in edit boxes
   if (msg.message == WM_KEYDOWN && msg.wParam == VK_RETURN) {
@@ -178,6 +182,37 @@ BOOL CHashCalcDialog::OnInitDialog() {
 
   // Initialize system tray icon (but don't show it yet)
   CreateTrayIcon();
+
+  // Process command line input if provided
+  if (!m_cmdLineInput.empty()) {
+    // Check if input is a file path (file exists) or text
+    DWORD fileAttrib = GetFileAttributes(m_cmdLineInput.c_str());
+    bool isFile = (fileAttrib != INVALID_FILE_ATTRIBUTES) && !(fileAttrib & FILE_ATTRIBUTE_DIRECTORY);
+
+    if (isFile) {
+      // Input is a valid file path
+      CheckRadioButton(IDC_RADIO_TEXT, IDC_RADIO_FILE, IDC_RADIO_FILE);
+      GetDlgItem(IDC_EDIT_TEXT).EnableWindow(FALSE);
+      GetDlgItem(IDC_EDIT_FILE).EnableWindow(TRUE);
+      GetDlgItem(IDC_BUTTON_BROWSE).EnableWindow(TRUE);
+      SetDlgItemText(IDC_EDIT_FILE, m_cmdLineInput.c_str());
+    } else {
+      // Input is text
+      CheckRadioButton(IDC_RADIO_TEXT, IDC_RADIO_FILE, IDC_RADIO_TEXT);
+      GetDlgItem(IDC_EDIT_TEXT).EnableWindow(TRUE);
+      GetDlgItem(IDC_EDIT_FILE).EnableWindow(FALSE);
+      GetDlgItem(IDC_BUTTON_BROWSE).EnableWindow(FALSE);
+      SetDlgItemText(IDC_EDIT_TEXT, m_cmdLineInput.c_str());
+    }
+
+    // Update button states after input is set
+    UpdateButtonStates();
+
+    // Automatically start calculation if any algorithm is selected
+    // If no algorithm is selected, the normal logic will prompt the user
+    PostMessage(WM_COMMAND, MAKEWPARAM(IDC_BUTTON_CALCULATE, BN_CLICKED),
+                reinterpret_cast<LPARAM>(GetDlgItem(IDC_BUTTON_CALCULATE).GetHwnd()));
+  }
 
   return TRUE;
 }

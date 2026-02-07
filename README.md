@@ -119,6 +119,13 @@ HashCalc supports **50+ cryptographic algorithms** organized into 4 categories:
   - Shows build date and copyright information
   - Includes technology stack information (Win32++, Crypto++, BLAKE3, MD6, HAVAL)
   - Provides GitHub repository link and contact information
+- **Command-Line Support**: Launch with file path or text as argument for quick hashing
+  - Example: `HashCalc.exe "C:\path\to\file.txt"`
+  - Automatically loads the specified file and prepares for calculation
+- **Keyboard Shortcuts**: Efficient keyboard navigation for power users
+  - Press **Enter** in file path field to validate and focus on Calculate button
+  - Press **Enter** in text input field to immediately start calculation
+  - Tab navigation between controls for keyboard-only operation
 - **Stay on Top**: Keep the window visible while working with other applications
 - **Progress Bar**: Visual progress indicator with Windows taskbar integration
 - **Batch Operations**: Select multiple algorithms and compute all at once
@@ -213,6 +220,25 @@ Replace `[vcpkg-root]` with your vcpkg installation path.
 
 ## Usage
 
+### Command-Line Usage
+
+HashCalc supports command-line arguments for quick hashing:
+
+```bash
+# Hash a file by passing its path as an argument
+HashCalc.exe "C:\path\to\file.txt"
+
+# Also works with relative paths
+HashCalc.exe "document.pdf"
+```
+
+The application will:
+- Automatically load the specified file path into the file input field
+- Switch to File mode if not already selected
+- Prepare the interface for immediate calculation
+
+> **Note**: Command-line mode only loads the file path; you still need to select algorithms and click Calculate.
+
 ### Computing File Hash
 
 1. **Launch HashCalc**
@@ -221,6 +247,7 @@ Replace `[vcpkg-root]` with your vcpkg installation path.
    - Use **"Clear All"** button to deselect all
 3. **Choose file** - Click **"Browse"** to select a file, or simply **drag-and-drop** a file onto the window
 4. **Calculate** - Click the **"Calculate"** button to compute the hashes
+   - Or press **Enter** in the file path field to validate and prepare for calculation
 5. **View results** - Hash values will be displayed in the output area
 
 > **💡 Pro Tip**: Enable "Stay on Top" to keep HashCalc visible while copying hash values to other applications.
@@ -232,6 +259,7 @@ Replace `[vcpkg-root]` with your vcpkg installation path.
 3. **Enter text** - Type or paste your text into the input field
 4. **Select algorithms** - Choose desired hash algorithms from the checkboxes
 5. **Calculate** - Click the **"Calculate"** button to compute the hashes
+   - Or press **Enter** in the text input field to immediately start calculation
 6. **View results** - Hash values will be displayed in the output area
 
 ### Verifying File Integrity
@@ -247,11 +275,13 @@ To verify that a file hasn't been tampered with:
 | Feature | Description |
 |---------|-------------|
 | **🖱️ Drag & Drop** | Simply drag files onto the HashCalc window for instant hashing |
+| **⌨️ Keyboard Shortcuts** | Press Enter in file path field to validate, or in text field to calculate immediately |
 | **📌 Stay on Top** | Enable this option to keep HashCalc visible while working |
 | **🔔 System Tray** | Minimize to system tray for unobtrusive background operation |
 | **⚡ Multi-Algorithm** | Select multiple algorithms to compute all hashes simultaneously |
 | **💾 Auto-Save** | Your last selected algorithms are automatically saved for next time |
 | **📊 Progress Bar** | Visual progress indicator integrated with Windows taskbar |
+| **💻 Command-Line** | Launch with file path as argument: `HashCalc.exe "file.txt"` |
 
 ---
 
@@ -815,7 +845,9 @@ Potential features for future releases:
 
 - [ ] **Hash Comparison Tool** - Compare two files side-by-side
 - [ ] **Export Results** - Save results to CSV, JSON, or TXT files
-- [ ] **Command-Line Interface** - CLI for batch processing and automation
+- [ ] **Enhanced CLI Mode** - Full command-line interface for batch processing and automation
+  - Current version supports file path as argument; future will add headless operation
+  - Planned: `HashCalc.exe --file "path" --algo SHA256 --output result.txt`
 - [ ] **Hash File Support** - Read/write .md5, .sha256, .sfv files
 - [ ] **Context Menu Integration** - Right-click files in Windows Explorer
 - [ ] **Dark Mode** - Modern dark theme support
