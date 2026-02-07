@@ -31,8 +31,26 @@ using RIPEMD160Hash = CryptoppHashBase<CryptoPP::RIPEMD160>;
 using RIPEMD256Hash = CryptoppHashBase<CryptoPP::RIPEMD256>;
 using RIPEMD320Hash = CryptoppHashBase<CryptoPP::RIPEMD320>;
 
-// CRC32
-using CRC32Hash = CryptoppHashBase<CryptoPP::CRC32>;
+// CRC32 with proper byte order handling
+class CRC32Hash : public IHashAlgorithm {
+public:
+    CRC32Hash();
+
+    std::string getName() const override {
+        return "CRC32";
+    }
+
+    size_t getDigestSize() const override {
+        return 4;
+    }
+
+    void update(const uint8_t* data, size_t length) override;
+    std::vector<uint8_t> finalize() override;
+    void reset() override;
+
+private:
+    std::unique_ptr<CryptoPP::CRC32> m_hash;
+};
 
 // Adler32
 using Adler32Hash = CryptoppHashBase<CryptoPP::Adler32>;

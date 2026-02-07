@@ -101,12 +101,22 @@ void CRC16::TruncatedFinal(CryptoPP::byte *digest, size_t digestSize) {
 // ============================================================================
 // CRC-32C Implementation
 // ============================================================================
+// Standard CRC-32C (Castagnoli) parameters:
+// - Polynomial: 0x1EDC6F41 (reversed) / 0x82F63B78 (normal)
+// - Initial value: 0xFFFFFFFF
+// - Reflect input: true
+// - Reflect output: true
+// - Final XOR: 0xFFFFFFFF
+// - Check value for "123456789": 0xE3069283
+// ============================================================================
 
 void CRC32C::InitTable() {
     if (m_tableInitialized) return;
-    
-    const uint32_t polynomial = 0x1EDC6F41; // CRC-32C (Castagnoli) polynomial
-    
+
+    // CRC-32C polynomial (reversed representation for reflected algorithm)
+    const uint32_t polynomial = 0x82F63B78;
+
+    // Build lookup table using reflected algorithm
     for (uint32_t i = 0; i < 256; ++i) {
         uint32_t crc = i;
         for (int j = 0; j < 8; ++j) {
@@ -118,7 +128,7 @@ void CRC32C::InitTable() {
         }
         m_table[i] = crc;
     }
-    
+
     m_tableInitialized = true;
 }
 
@@ -128,6 +138,7 @@ void CRC32C::Restart() {
 }
 
 void CRC32C::Update(const CryptoPP::byte *input, size_t length) {
+    // Process each byte with reflected algorithm
     for (size_t i = 0; i < length; ++i) {
         uint8_t index = (m_crc ^ input[i]) & 0xFF;
         m_crc = (m_crc >> 8) ^ m_table[index];
@@ -136,16 +147,16 @@ void CRC32C::Update(const CryptoPP::byte *input, size_t length) {
 
 void CRC32C::TruncatedFinal(CryptoPP::byte *digest, size_t digestSize) {
     ThrowIfInvalidTruncatedSize(digestSize);
-    
+
     // Final XOR with 0xFFFFFFFF
     uint32_t final_crc = m_crc ^ 0xFFFFFFFF;
-    
-    // Store as little-endian (common for CRC-32)
-    digest[0] = static_cast<CryptoPP::byte>(final_crc & 0xFF);
-    digest[1] = static_cast<CryptoPP::byte>((final_crc >> 8) & 0xFF);
-    digest[2] = static_cast<CryptoPP::byte>((final_crc >> 16) & 0xFF);
-    digest[3] = static_cast<CryptoPP::byte>((final_crc >> 24) & 0xFF);
-    
+
+    // Store as big-endian (ABCD byte order)
+    digest[0] = static_cast<CryptoPP::byte>((final_crc >> 24) & 0xFF);
+    digest[1] = static_cast<CryptoPP::byte>((final_crc >> 16) & 0xFF);
+    digest[2] = static_cast<CryptoPP::byte>((final_crc >> 8) & 0xFF);
+    digest[3] = static_cast<CryptoPP::byte>(final_crc & 0xFF);
+
     Restart();
 }
 

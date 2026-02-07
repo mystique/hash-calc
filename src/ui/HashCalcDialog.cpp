@@ -36,9 +36,25 @@ CHashCalcDialog::CHashCalcDialog()
     m_bCancelCalculation(false),
     m_bIsCalculating(false),
     m_bTrayIconCreated(false),
-    m_hAppIcon(NULL) {
+    m_hAppIcon(NULL),
+    m_pViewSHA(nullptr),
+    m_pViewSHA3(nullptr),
+    m_pViewHAVAL(nullptr),
+    m_pViewChecksum(nullptr) {
   // Initialize NOTIFYICONDATA structure
   ZeroMemory(&m_nid, sizeof(m_nid));
+}
+
+CHashCalcDialog::~CHashCalcDialog() {
+  // Views are owned by CTab's unique_ptrs and will be automatically deleted
+  // when the tab control is destroyed. We just need to null out our pointers.
+  m_pViewSHA = nullptr;
+  m_pViewSHA3 = nullptr;
+  m_pViewHAVAL = nullptr;
+  m_pViewChecksum = nullptr;
+
+  // Remove tray icon if still present
+  RemoveTrayIcon();
 }
 
 BOOL CHashCalcDialog::PreTranslateMessage(MSG& msg) {
@@ -104,23 +120,29 @@ BOOL CHashCalcDialog::OnInitDialog() {
   // Initialize Tab Control with Win32++ CTab
   m_tabControl.AttachDlgItem(IDC_TAB_MAIN, *this);
 
-  // Create tab views (they will create their own windows from dialog templates)
-  m_viewSHA.Create(*this);
-  m_viewSHA3.Create(*this);
-  m_viewHAVAL.Create(*this);
-  m_viewChecksum.Create(*this);
+  // Create tab views on the heap (CTab will take ownership via unique_ptr)
+  m_pViewSHA = new CTabViewSHA();
+  m_pViewSHA3 = new CTabViewSHA3();
+  m_pViewHAVAL = new CTabViewHAVAL();
+  m_pViewChecksum = new CTabViewChecksum();
+
+  // Create the view windows from dialog templates
+  m_pViewSHA->Create(*this);
+  m_pViewSHA3->Create(*this);
+  m_pViewHAVAL->Create(*this);
+  m_pViewChecksum->Create(*this);
 
   // Set parent dialog for notifications
-  m_viewSHA.SetParentDialog(*this);
-  m_viewSHA3.SetParentDialog(*this);
-  m_viewHAVAL.SetParentDialog(*this);
-  m_viewChecksum.SetParentDialog(*this);
+  m_pViewSHA->SetParentDialog(*this);
+  m_pViewSHA3->SetParentDialog(*this);
+  m_pViewHAVAL->SetParentDialog(*this);
+  m_pViewChecksum->SetParentDialog(*this);
 
-  // Add views to tab control
-  m_tabControl.AddTabPage(&m_viewSHA, L"SHA && MD");
-  m_tabControl.AddTabPage(&m_viewSHA3, L"SHA-3 && Modern");
-  m_tabControl.AddTabPage(&m_viewHAVAL, L"HAVAL && RIPEMD");
-  m_tabControl.AddTabPage(&m_viewChecksum, L"Checksum && Others");
+  // Add views to tab control (transfers ownership to CTab's unique_ptrs)
+  m_tabControl.AddTabPage(m_pViewSHA, L"SHA && MD");
+  m_tabControl.AddTabPage(m_pViewSHA3, L"SHA-3 && Modern");
+  m_tabControl.AddTabPage(m_pViewHAVAL, L"HAVAL && RIPEMD");
+  m_tabControl.AddTabPage(m_pViewChecksum, L"Checksum && Others");
 
   // Select first tab
   m_tabControl.SelectPage(0);
@@ -380,10 +402,10 @@ void CHashCalcDialog::UpdateTabNames() {
   // Get counts from each view
   for (int i = 0; i < 4; i++) {
     int count = 0;
-    if (i == 0) count = m_viewSHA.CountSelectedAlgorithms();
-    else if (i == 1) count = m_viewSHA3.CountSelectedAlgorithms();
-    else if (i == 2) count = m_viewHAVAL.CountSelectedAlgorithms();
-    else if (i == 3) count = m_viewChecksum.CountSelectedAlgorithms();
+    if (i == 0) count = m_pViewSHA->CountSelectedAlgorithms();
+    else if (i == 1) count = m_pViewSHA3->CountSelectedAlgorithms();
+    else if (i == 2) count = m_pViewHAVAL->CountSelectedAlgorithms();
+    else if (i == 3) count = m_pViewChecksum->CountSelectedAlgorithms();
 
     if (count > 0) {
       swprintf_s(tabNameBuffers[i], 100, L"%s (%d)", baseTabNames[i], count);
@@ -444,10 +466,10 @@ void CHashCalcDialog::OnExit() {
 
 void CHashCalcDialog::OnSelectAll() {
   // Delegate to all views
-  m_viewSHA.SelectAll();
-  m_viewSHA3.SelectAll();
-  m_viewHAVAL.SelectAll();
-  m_viewChecksum.SelectAll();
+  m_pViewSHA->SelectAll();
+  m_pViewSHA3->SelectAll();
+  m_pViewHAVAL->SelectAll();
+  m_pViewChecksum->SelectAll();
 
   // Update button states after selection
   UpdateButtonStates();
@@ -459,10 +481,10 @@ void CHashCalcDialog::OnSelectAll() {
 
 void CHashCalcDialog::OnClearAll() {
   // Delegate to all views
-  m_viewSHA.ClearAll();
-  m_viewSHA3.ClearAll();
-  m_viewHAVAL.ClearAll();
-  m_viewChecksum.ClearAll();
+  m_pViewSHA->ClearAll();
+  m_pViewSHA3->ClearAll();
+  m_pViewHAVAL->ClearAll();
+  m_pViewChecksum->ClearAll();
 
   // Update button states after clearing
   UpdateButtonStates();
@@ -495,10 +517,10 @@ void CHashCalcDialog::EnableControls(bool enable) {
   m_tabControl.EnableWindow(enable);
 
   // Enable/disable all views
-  m_viewSHA.EnableControls(enable);
-  m_viewSHA3.EnableControls(enable);
-  m_viewHAVAL.EnableControls(enable);
-  m_viewChecksum.EnableControls(enable);
+  m_pViewSHA->EnableControls(enable);
+  m_pViewSHA3->EnableControls(enable);
+  m_pViewHAVAL->EnableControls(enable);
+  m_pViewChecksum->EnableControls(enable);
 
   // Enable/disable Select All and Clear All buttons
   GetDlgItem(IDC_SELECT_ALL).EnableWindow(enable);
@@ -907,20 +929,20 @@ bool CHashCalcDialog::ValidateFilePath(const std::wstring& filePath, std::wstrin
 
 bool CHashCalcDialog::HasAnyAlgorithmSelected() {
   // Check if views are created
-  if (!m_viewSHA.GetHwnd() || !m_viewSHA3.GetHwnd() ||
-      !m_viewHAVAL.GetHwnd() || !m_viewChecksum.GetHwnd()) {
+  if (!m_pViewSHA->GetHwnd() || !m_pViewSHA3->GetHwnd() ||
+      !m_pViewHAVAL->GetHwnd() || !m_pViewChecksum->GetHwnd()) {
     return false;
   }
 
   // Check if any view has selected algorithms
-  if (m_viewSHA.CountSelectedAlgorithms() > 0) return true;
-  if (m_viewSHA3.CountSelectedAlgorithms() > 0) return true;
+  if (m_pViewSHA->CountSelectedAlgorithms() > 0) return true;
+  if (m_pViewSHA3->CountSelectedAlgorithms() > 0) return true;
 
   // For HAVAL, if any HAVAL algorithm is selected, it's valid
   // (the code defaults to Pass 3 if no pass is explicitly selected)
-  if (m_viewHAVAL.CountSelectedAlgorithms() > 0) return true;
+  if (m_pViewHAVAL->CountSelectedAlgorithms() > 0) return true;
 
-  if (m_viewChecksum.CountSelectedAlgorithms() > 0) return true;
+  if (m_pViewChecksum->CountSelectedAlgorithms() > 0) return true;
 
   return false;
 }
@@ -928,10 +950,10 @@ bool CHashCalcDialog::HasAnyAlgorithmSelected() {
 bool CHashCalcDialog::HasAllAlgorithmsSelected() {
   // Collect all algorithm states from all views
   std::map<int, bool> allStates;
-  auto states1 = m_viewSHA.GetAlgorithmStates();
-  auto states2 = m_viewSHA3.GetAlgorithmStates();
-  auto states3 = m_viewHAVAL.GetAlgorithmStates();
-  auto states4 = m_viewChecksum.GetAlgorithmStates();
+  auto states1 = m_pViewSHA->GetAlgorithmStates();
+  auto states2 = m_pViewSHA3->GetAlgorithmStates();
+  auto states3 = m_pViewHAVAL->GetAlgorithmStates();
+  auto states4 = m_pViewChecksum->GetAlgorithmStates();
 
   allStates.insert(states1.begin(), states1.end());
   allStates.insert(states2.begin(), states2.end());
@@ -947,7 +969,7 @@ bool CHashCalcDialog::HasAllAlgorithmsSelected() {
 
   // Check HAVAL passes
   bool pass3, pass4, pass5;
-  m_viewHAVAL.GetHavalPassStates(pass3, pass4, pass5);
+  m_pViewHAVAL->GetHavalPassStates(pass3, pass4, pass5);
   if (!pass3 || !pass4 || !pass5) {
     return false;
   }
@@ -1018,13 +1040,13 @@ void CHashCalcDialog::LoadConfiguration() {
 
   // Apply algorithm selections to views
   auto algorithms = m_configManager.GetAllAlgorithms();
-  m_viewSHA.SetAlgorithmStates(algorithms);
-  m_viewSHA3.SetAlgorithmStates(algorithms);
-  m_viewHAVAL.SetAlgorithmStates(algorithms);
-  m_viewChecksum.SetAlgorithmStates(algorithms);
+  m_pViewSHA->SetAlgorithmStates(algorithms);
+  m_pViewSHA3->SetAlgorithmStates(algorithms);
+  m_pViewHAVAL->SetAlgorithmStates(algorithms);
+  m_pViewChecksum->SetAlgorithmStates(algorithms);
 
   // Apply HAVAL pass selections (can be multiple)
-  m_viewHAVAL.SetHavalPassStates(
+  m_pViewHAVAL->SetHavalPassStates(
     m_configManager.GetHavalPass3(),
     m_configManager.GetHavalPass4(),
     m_configManager.GetHavalPass5()
@@ -1045,10 +1067,10 @@ void CHashCalcDialog::SaveConfiguration() {
 
   // Collect algorithm states from all views
   std::map<int, bool> allStates;
-  auto states1 = m_viewSHA.GetAlgorithmStates();
-  auto states2 = m_viewSHA3.GetAlgorithmStates();
-  auto states3 = m_viewHAVAL.GetAlgorithmStates();
-  auto states4 = m_viewChecksum.GetAlgorithmStates();
+  auto states1 = m_pViewSHA->GetAlgorithmStates();
+  auto states2 = m_pViewSHA3->GetAlgorithmStates();
+  auto states3 = m_pViewHAVAL->GetAlgorithmStates();
+  auto states4 = m_pViewChecksum->GetAlgorithmStates();
 
   allStates.insert(states1.begin(), states1.end());
   allStates.insert(states2.begin(), states2.end());
@@ -1062,7 +1084,7 @@ void CHashCalcDialog::SaveConfiguration() {
 
   // Save HAVAL pass selections (can be multiple)
   bool pass3, pass4, pass5;
-  m_viewHAVAL.GetHavalPassStates(pass3, pass4, pass5);
+  m_pViewHAVAL->GetHavalPassStates(pass3, pass4, pass5);
   m_configManager.SetHavalPass3(pass3);
   m_configManager.SetHavalPass4(pass4);
   m_configManager.SetHavalPass5(pass5);
@@ -1091,10 +1113,10 @@ void CHashCalcDialog::EnableControlsById(const int* ids, size_t count, bool enab
 bool CHashCalcDialog::IsAlgorithmSelected(int algorithmId) {
   // Collect all algorithm states from all views
   std::map<int, bool> allStates;
-  auto states1 = m_viewSHA.GetAlgorithmStates();
-  auto states2 = m_viewSHA3.GetAlgorithmStates();
-  auto states3 = m_viewHAVAL.GetAlgorithmStates();
-  auto states4 = m_viewChecksum.GetAlgorithmStates();
+  auto states1 = m_pViewSHA->GetAlgorithmStates();
+  auto states2 = m_pViewSHA3->GetAlgorithmStates();
+  auto states3 = m_pViewHAVAL->GetAlgorithmStates();
+  auto states4 = m_pViewChecksum->GetAlgorithmStates();
 
   allStates.insert(states1.begin(), states1.end());
   allStates.insert(states2.begin(), states2.end());
@@ -1220,7 +1242,7 @@ void CHashCalcDialog::ComputeHashAlgorithmsForText(
   // Check which passes are selected and compute for each
   std::vector<int> selectedPasses;
   bool pass3, pass4, pass5;
-  m_viewHAVAL.GetHavalPassStates(pass3, pass4, pass5);
+  m_pViewHAVAL->GetHavalPassStates(pass3, pass4, pass5);
 
   if (pass3) selectedPasses.push_back(3);
   if (pass4) selectedPasses.push_back(4);
@@ -1378,7 +1400,7 @@ void CHashCalcDialog::ComputeHashAlgorithmsForFile(
   // Check which passes are selected and compute for each
   std::vector<int> selectedPasses;
   bool pass3, pass4, pass5;
-  m_viewHAVAL.GetHavalPassStates(pass3, pass4, pass5);
+  m_pViewHAVAL->GetHavalPassStates(pass3, pass4, pass5);
 
   if (pass3) selectedPasses.push_back(3);
   if (pass4) selectedPasses.push_back(4);

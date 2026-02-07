@@ -27,7 +27,7 @@ namespace core {
 class CHashCalcDialog : public Win32xx::CDialog {
 public:
   CHashCalcDialog();
-  virtual ~CHashCalcDialog() override = default;
+  virtual ~CHashCalcDialog() override;
 
 protected:
   // Virtual function overrides
@@ -91,13 +91,12 @@ private:
   CFont m_fontResult;
 
   // Win32++ Tab Control and Views
-  // IMPORTANT: Tab control must be destroyed BEFORE the views
-  // So declare views first (they will be destroyed last)
-  CTabViewSHA m_viewSHA;
-  CTabViewSHA3 m_viewSHA3;
-  CTabViewHAVAL m_viewHAVAL;
-  CTabViewChecksum m_viewChecksum;
-  Win32xx::CTab m_tabControl;  // Moved after views
+  // Views are heap-allocated because CTab takes ownership via unique_ptr
+  Win32xx::CTab m_tabControl;
+  CTabViewSHA* m_pViewSHA;
+  CTabViewSHA3* m_pViewSHA3;
+  CTabViewHAVAL* m_pViewHAVAL;
+  CTabViewChecksum* m_pViewChecksum;
 
   // Thread management
   HANDLE m_hCalcThread;
