@@ -77,8 +77,6 @@ HashCalc supports **50+ cryptographic algorithms** organized into 4 categories:
 | **SHAKE** | Variable | SHAKE-128, SHAKE-256 (Extendable-Output Functions) |
 | **BLAKE2** | 256/512-bit | BLAKE2b, BLAKE2s (high-speed cryptographic hash) |
 | **BLAKE3** | 128/160/192/224/256/384/512-bit | Native implementation, extremely fast |
-| **LSH** | 256/512-bit | Korean standard hash functions |
-| **SM3** | 256-bit | Chinese national standard |
 
 </details>
 
@@ -105,6 +103,8 @@ HashCalc supports **50+ cryptographic algorithms** organized into 4 categories:
 | **Adler-32** | 32-bit | Fast checksum algorithm |
 | **Tiger** | 192-bit | Designed for 64-bit platforms |
 | **Whirlpool** | 512-bit | ISO/IEC standard hash function |
+| **SM3** | 256-bit | Chinese national standard |
+| **LSH** | 256/512-bit | Korean standard hash functions |
 
 </details>
 
@@ -303,7 +303,8 @@ The application follows a clean, layered architecture with clear separation of c
 │  │  • BLAKE2, SHAKE     │  │  • HAVAL (Native)        │    │
 │  │  • MD2, MD4, MD5     │  │  • CRC Family (Native)   │    │
 │  │  • RIPEMD, Tiger     │  │                          │    │
-│  │  • Whirlpool, SM3    │  │                          │    │
+│  │  • Whirlpool         │  │                          │    │
+│  │  • SM3, LSH          │  │                          │    │
 │  └──────────────────────┘  └──────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
 ```
