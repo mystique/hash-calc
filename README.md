@@ -686,6 +686,34 @@ If you encounter any issues or have questions:
 
 ## Changelog
 
+### 🔧 Version 1.2.1 - CRC Fixes & Memory Management
+
+**Release Date**: 2026-02-07
+
+#### 🐛 Bug Fixes
+- **CRC-32C Algorithm**: Fixed CRC-32C implementation with correct parameters
+  - Corrected polynomial value to 0x82F63B78 (standard CRC-32C/Castagnoli)
+  - Changed output from little-endian to big-endian byte order for standard display format
+  - Added comprehensive documentation with standard parameters and check value verification
+  - Now produces correct hash values matching standard CRC-32C implementations
+- **CRC-32 Byte Order**: Implemented custom CRC32Hash class with proper byte order handling
+  - Crypto++ CRC32 outputs in little-endian, but standard CRC-32 display is big-endian
+  - Added byte order reversal to match standard CRC-32 output format
+  - Ensures consistent hash display across different tools and platforms
+
+#### 🏗️ Architecture Improvements
+- **UI Tab View Memory Management**: Refactored tab view lifecycle management
+  - Changed from stack-allocated member variables to heap-allocated pointers
+  - CTab now takes ownership via unique_ptr for proper RAII
+  - Added explicit destructor to handle cleanup sequence
+  - **Resolves potential destruction order crashes** that could occur on application exit
+  - Improved memory safety and resource management
+
+#### 📝 Configuration
+- Added `.claude/` directory to `.gitignore` for cleaner repository
+
+---
+
 ### 🎉 Version 1.2.0 - Tab Architecture & System Tray
 
 **Release Date**: 2026-02
