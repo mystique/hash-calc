@@ -4,8 +4,10 @@
 namespace core {
 
 std::map<std::string, HashAlgorithmFactory::Creator>& HashAlgorithmFactory::getRegistry() {
-    static std::map<std::string, Creator> registry;
-    return registry;
+    // Use a pointer to avoid destruction order issues
+    // The map is intentionally leaked to prevent crashes during static deinitialization
+    static std::map<std::string, Creator>* registry = new std::map<std::string, Creator>();
+    return *registry;
 }
 
 void HashAlgorithmFactory::registerAlgorithm(const std::string& name, Creator creator) {

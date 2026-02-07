@@ -9,19 +9,20 @@ public:
   virtual BOOL InitInstance() override {
     // Initialize COM for taskbar progress and other COM features
     CoInitialize(NULL);
-    
-    // Create and show the main dialog
-    m_dialog.DoModal();
-    
-    // Uninitialize COM
+
+    // Create and show the main dialog in a scope
+    // This ensures the dialog is destroyed BEFORE CoUninitialize
+    {
+      CHashCalcDialog dialog;
+      dialog.DoModal();
+    }
+
+    // Uninitialize COM after dialog is destroyed
     CoUninitialize();
-    
+
     // Return FALSE to exit the application after dialog closes
     return FALSE;
   }
-
-private:
-  CHashCalcDialog m_dialog;
 };
 
 // Windows application entry point

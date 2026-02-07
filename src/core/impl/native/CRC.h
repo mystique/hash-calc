@@ -21,7 +21,7 @@ public:
     CRYPTOPP_CONSTANT(DIGESTSIZE = 1);  // 8 bits = 1 byte
     CRYPTOPP_CONSTANT(BLOCKSIZE = 1);
 
-    CRC8() { Restart(); }
+    CRC8() : m_tableInitialized(false) { Restart(); }
 
     std::string AlgorithmName() const override {
         return "CRC-8";
@@ -56,7 +56,7 @@ public:
     CRYPTOPP_CONSTANT(DIGESTSIZE = 2);  // 16 bits = 2 bytes
     CRYPTOPP_CONSTANT(BLOCKSIZE = 1);
 
-    CRC16() { Restart(); }
+    CRC16() : m_tableInitialized(false) { Restart(); }
 
     std::string AlgorithmName() const override {
         return "CRC-16";
@@ -92,7 +92,7 @@ public:
     CRYPTOPP_CONSTANT(DIGESTSIZE = 4);  // 32 bits = 4 bytes
     CRYPTOPP_CONSTANT(BLOCKSIZE = 1);
 
-    CRC32C() { Restart(); }
+    CRC32C() : m_tableInitialized(false) { Restart(); }
 
     std::string AlgorithmName() const override {
         return "CRC-32C";
@@ -127,7 +127,7 @@ public:
     CRYPTOPP_CONSTANT(DIGESTSIZE = 8);  // 64 bits = 8 bytes
     CRYPTOPP_CONSTANT(BLOCKSIZE = 1);
 
-    CRC64() { Restart(); }
+    CRC64() : m_tableInitialized(false) { Restart(); }
 
     std::string AlgorithmName() const override {
         return "CRC-64";

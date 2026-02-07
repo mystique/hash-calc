@@ -66,3 +66,40 @@ void CTabViewHAVAL::GetHavalPassStates(bool& pass3, bool& pass4, bool& pass5) co
   pass4 = (IsDlgButtonChecked(IDC_HAVAL_PASS4) == BST_CHECKED);
   pass5 = (IsDlgButtonChecked(IDC_HAVAL_PASS5) == BST_CHECKED);
 }
+
+int CTabViewHAVAL::CountSelectedAlgorithms() const {
+  int count = 0;
+
+  // Count HAVAL algorithms
+  int havalCount = 0;
+  for (size_t i = 0; i < 5; i++) { // First 5 are HAVAL algorithms
+    if (IsDlgButtonChecked(s_algorithmIds[i]) == BST_CHECKED) {
+      havalCount++;
+    }
+  }
+
+  // Count selected passes
+  int passCount = 0;
+  bool pass3, pass4, pass5;
+  GetHavalPassStates(pass3, pass4, pass5);
+  if (pass3) passCount++;
+  if (pass4) passCount++;
+  if (pass5) passCount++;
+
+  // If HAVAL algorithms are selected but no pass is selected, default to 1 pass
+  if (havalCount > 0 && passCount == 0) {
+    passCount = 1;
+  }
+
+  // Total HAVAL combinations = havalCount * passCount
+  count += havalCount * passCount;
+
+  // Count RIPEMD algorithms (remaining algorithms in the array)
+  for (size_t i = 5; i < s_algorithmCount; i++) {
+    if (IsDlgButtonChecked(s_algorithmIds[i]) == BST_CHECKED) {
+      count++;
+    }
+  }
+
+  return count;
+}

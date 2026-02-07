@@ -35,7 +35,8 @@ CHashCalcDialog::CHashCalcDialog()
     m_hCalcThread(NULL),
     m_bCancelCalculation(false),
     m_bIsCalculating(false),
-    m_bTrayIconCreated(false) {
+    m_bTrayIconCreated(false),
+    m_hAppIcon(NULL) {
   // Initialize NOTIFYICONDATA structure
   ZeroMemory(&m_nid, sizeof(m_nid));
 }
@@ -65,10 +66,10 @@ BOOL CHashCalcDialog::OnInitDialog() {
   // Call base class implementation
   CDialog::OnInitDialog();
 
-  // Set the icon for this dialog
-  HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON));
-  SetIcon(hIcon, TRUE);   // Set big icon
-  SetIcon(hIcon, FALSE);  // Set small icon
+  // Set the icon for this dialog (LoadIcon returns a shared resource, don't destroy)
+  m_hAppIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON));
+  SetIcon(m_hAppIcon, TRUE);   // Set big icon
+  SetIcon(m_hAppIcon, FALSE);  // Set small icon
 
   // Set monospace font for result box
   m_fontResult.CreatePointFont(90, L"Consolas");
@@ -400,11 +401,42 @@ void CHashCalcDialog::OnCancel() {
 }
 
 void CHashCalcDialog::OnExit() {
+  // If calculation is in progress, cancel it and wait for thread to finish
+  if (m_bIsCalculating && m_hCalcThread) {
+    // Signal cancellation
+    m_bCancelCalculation.store(true);
+
+    // Wait for thread to complete (with timeout)
+    DWORD waitResult = WaitForSingleObject(m_hCalcThread, 5000); // 5 second timeout
+
+    if (waitResult == WAIT_TIMEOUT) {
+      // Thread didn't finish in time, force terminate (not ideal but necessary)
+      TerminateThread(m_hCalcThread, 1);
+    }
+
+    // Close thread handle
+    CloseHandle(m_hCalcThread);
+    m_hCalcThread = NULL;
+    m_bIsCalculating = false;
+  }
+
+  // Process any pending messages to ensure WM_HASH_COMPLETE is handled
+  MSG msg;
+  while (PeekMessage(&msg, *this, WM_HASH_COMPLETE, WM_HASH_COMPLETE, PM_REMOVE)) {
+    // Message will be processed and memory will be freed
+    DispatchMessage(&msg);
+  }
+
   // Remove tray icon before closing
   RemoveTrayIcon();
 
   // Save configuration before exiting
   SaveConfiguration();
+
+  // Release COM interface explicitly before dialog destruction
+  if (m_pTaskbarList) {
+    m_pTaskbarList.Reset();
+  }
 
   // Close the dialog
   EndDialog(IDOK);
@@ -883,13 +915,12 @@ bool CHashCalcDialog::HasAnyAlgorithmSelected() {
   // Check if any view has selected algorithms
   if (m_viewSHA.CountSelectedAlgorithms() > 0) return true;
   if (m_viewSHA3.CountSelectedAlgorithms() > 0) return true;
-  if (m_viewHAVAL.CountSelectedAlgorithms() > 0) return true;
-  if (m_viewChecksum.CountSelectedAlgorithms() > 0) return true;
 
-  // Check HAVAL passes
-  bool pass3, pass4, pass5;
-  m_viewHAVAL.GetHavalPassStates(pass3, pass4, pass5);
-  if (pass3 || pass4 || pass5) return true;
+  // For HAVAL, if any HAVAL algorithm is selected, it's valid
+  // (the code defaults to Pass 3 if no pass is explicitly selected)
+  if (m_viewHAVAL.CountSelectedAlgorithms() > 0) return true;
+
+  if (m_viewChecksum.CountSelectedAlgorithms() > 0) return true;
 
   return false;
 }
@@ -1178,7 +1209,7 @@ void CHashCalcDialog::ComputeHashAlgorithmsForText(
   // HAVAL Family
   // Compute for each selected pass count
   auto checkAndComputeHaval = [&](int id, int bits, int passes) {
-    if (IsDlgButtonChecked(id)) {
+    if (IsAlgorithmSelected(id)) {
       std::stringstream algoName, displayName;
       algoName << "HAVAL-" << bits << "/Pass" << passes;
       displayName << "HAVAL-" << bits << "/" << passes;
@@ -1188,10 +1219,13 @@ void CHashCalcDialog::ComputeHashAlgorithmsForText(
 
   // Check which passes are selected and compute for each
   std::vector<int> selectedPasses;
-  if (IsDlgButtonChecked(IDC_HAVAL_PASS3)) selectedPasses.push_back(3);
-  if (IsDlgButtonChecked(IDC_HAVAL_PASS4)) selectedPasses.push_back(4);
-  if (IsDlgButtonChecked(IDC_HAVAL_PASS5)) selectedPasses.push_back(5);
-  
+  bool pass3, pass4, pass5;
+  m_viewHAVAL.GetHavalPassStates(pass3, pass4, pass5);
+
+  if (pass3) selectedPasses.push_back(3);
+  if (pass4) selectedPasses.push_back(4);
+  if (pass5) selectedPasses.push_back(5);
+
   // If no pass is selected, default to 3-pass
   if (selectedPasses.empty()) {
     selectedPasses.push_back(3);
@@ -1333,7 +1367,7 @@ void CHashCalcDialog::ComputeHashAlgorithmsForFile(
   // HAVAL Family
   // Compute for each selected pass count
   auto checkAndComputeHaval = [&](int id, int bits, int passes) {
-    if (IsDlgButtonChecked(id)) {
+    if (IsAlgorithmSelected(id)) {
       std::stringstream algoName, displayName;
       algoName << "HAVAL-" << bits << "/Pass" << passes;
       displayName << "HAVAL-" << bits << "/" << passes;
@@ -1343,10 +1377,13 @@ void CHashCalcDialog::ComputeHashAlgorithmsForFile(
 
   // Check which passes are selected and compute for each
   std::vector<int> selectedPasses;
-  if (IsDlgButtonChecked(IDC_HAVAL_PASS3)) selectedPasses.push_back(3);
-  if (IsDlgButtonChecked(IDC_HAVAL_PASS4)) selectedPasses.push_back(4);
-  if (IsDlgButtonChecked(IDC_HAVAL_PASS5)) selectedPasses.push_back(5);
-  
+  bool pass3, pass4, pass5;
+  m_viewHAVAL.GetHavalPassStates(pass3, pass4, pass5);
+
+  if (pass3) selectedPasses.push_back(3);
+  if (pass4) selectedPasses.push_back(4);
+  if (pass5) selectedPasses.push_back(5);
+
   // If no pass is selected, default to 3-pass
   if (selectedPasses.empty()) {
     selectedPasses.push_back(3);
@@ -1400,8 +1437,8 @@ void CHashCalcDialog::CreateTrayIcon() {
   m_nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
   m_nid.uCallbackMessage = WM_TRAYICON;
 
-  // Load the application icon
-  m_nid.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APP_ICON));
+  // Use the same icon handle as the main window
+  m_nid.hIcon = m_hAppIcon;
 
   // Set tooltip text
   wcscpy_s(m_nid.szTip, L"Hash Calculator");
@@ -1415,6 +1452,8 @@ void CHashCalcDialog::RemoveTrayIcon() {
   if (m_bTrayIconCreated) {
     Shell_NotifyIcon(NIM_DELETE, &m_nid);
     m_bTrayIconCreated = false;
+    // Clear the icon handle from the structure (but don't destroy it - it's shared)
+    m_nid.hIcon = NULL;
   }
 }
 

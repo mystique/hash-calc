@@ -13,6 +13,9 @@ public:
   void SetHavalPassStates(bool pass3, bool pass4, bool pass5);
   void GetHavalPassStates(bool& pass3, bool& pass4, bool& pass5) const;
 
+  // Override to count HAVAL algorithms correctly (considering passes)
+  virtual int CountSelectedAlgorithms() const override;
+
 protected:
   // Implement base class interface
   virtual const int* GetAlgorithmIds() const override;

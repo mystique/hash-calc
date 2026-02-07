@@ -16,7 +16,7 @@ public:
   void SetParentDialog(HWND hParent) { m_hParentDialog = hParent; }
 
   // Algorithm management - common interface
-  int CountSelectedAlgorithms() const;
+  virtual int CountSelectedAlgorithms() const;
   void SetAlgorithmStates(const std::map<int, bool>& states);
   std::map<int, bool> GetAlgorithmStates() const;
   void SelectAll();

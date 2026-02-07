@@ -87,29 +87,36 @@ private:
   void RestoreFromTray();
   void MinimizeToTray();
 
+  // Font (should be destroyed last among UI elements)
   CFont m_fontResult;
 
   // Win32++ Tab Control and Views
-  Win32xx::CTab m_tabControl;
+  // IMPORTANT: Tab control must be destroyed BEFORE the views
+  // So declare views first (they will be destroyed last)
   CTabViewSHA m_viewSHA;
   CTabViewSHA3 m_viewSHA3;
   CTabViewHAVAL m_viewHAVAL;
   CTabViewChecksum m_viewChecksum;
+  Win32xx::CTab m_tabControl;  // Moved after views
 
   // Thread management
   HANDLE m_hCalcThread;
   std::atomic<bool> m_bCancelCalculation;
   bool m_bIsCalculating;
-  
+
   // Configuration manager
   ConfigManager m_configManager;
-  
-  // Taskbar progress
+
+  // Taskbar progress (COM object)
   Microsoft::WRL::ComPtr<ITaskbarList3> m_pTaskbarList;
 
   // System tray
   NOTIFYICONDATA m_nid;
   bool m_bTrayIconCreated;
+
+  // Icon handle (shared resource, don't destroy)
+  // Must be destroyed AFTER m_nid since m_nid.hIcon points to it
+  HICON m_hAppIcon;
 };
 
 #endif // HASH_CALC_DIALOG_H
