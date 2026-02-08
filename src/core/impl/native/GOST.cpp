@@ -377,6 +377,7 @@ void GOST94::TruncatedFinal(CryptoPP::byte *digest, size_t digestSize) {
 // ============================================================================
 // GOST R 34.11-2012 Implementation (Streebog)
 // Based on reference implementation by Alexey Degtyarev
+// Copyright (c) 2013, Alexey Degtyarev <alexey@renatasystems.org>
 // ============================================================================
 
 // Define uint512_u union for constants (must be defined before including constants)
@@ -386,7 +387,7 @@ ALIGN(16) union uint512_u {
     uint8_t B[64];
 };
 
-// Constants from GOST R 34.11-2012 specification
+// Constants from GOST R 34.11-2012 specification (from gost3411-2012-const.h)
 // buffer0: all zeros
 ALIGN(16) static const union uint512_u buffer0 = {{
     0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL
@@ -397,7 +398,7 @@ ALIGN(16) static const union uint512_u buffer512 = {{
     0x0000000000000200ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL, 0x0ULL
 }};
 
-// C[12]: Round constants for GOST R 34.11-2012
+// C[12]: Round constants for GOST R 34.11-2012 (from gost3411-2012-const.h)
 ALIGN(16) static const union uint512_u C[12] = {
     {{
          0xdd806559f2a64507ULL, 0x05767436cc744d23ULL, 0xa2422a08a460d315ULL, 0x4b7ce09192676901ULL,
@@ -449,64 +450,21 @@ ALIGN(16) static const union uint512_u C[12] = {
     }}
 };
 
-// GOST 2012 S-box (π substitution) - from GOST R 34.11-2012 standard
-template<unsigned int DIGEST_BITS>
-const uint8_t GOST2012<DIGEST_BITS>::SBOX[256] = {
-    0xFC, 0xEE, 0xDD, 0x11, 0xCF, 0x6E, 0x31, 0x16, 0xFB, 0xC4, 0xFA, 0xDA, 0x23, 0xC5, 0x04, 0x4D,
-    0xE9, 0x77, 0xF0, 0xDB, 0x93, 0x2E, 0x99, 0xBA, 0x17, 0x36, 0xF1, 0xBB, 0x14, 0xCD, 0x5F, 0xC1,
-    0xF9, 0x18, 0x65, 0x5A, 0xE2, 0x5C, 0xEF, 0x21, 0x81, 0x1C, 0x3C, 0x42, 0x8B, 0x01, 0x8E, 0x4F,
-    0x05, 0x84, 0x02, 0xAE, 0xE3, 0x6A, 0x8F, 0xA0, 0x06, 0x0B, 0xED, 0x98, 0x7F, 0xD4, 0xD3, 0x1F,
-    0xEB, 0x34, 0x2C, 0x51, 0xEA, 0xC8, 0x48, 0xAB, 0xF2, 0x2A, 0x68, 0xA2, 0xFD, 0x3A, 0xCE, 0xCC,
-    0xB5, 0x70, 0x0E, 0x56, 0x08, 0x0C, 0x76, 0x12, 0xBF, 0x72, 0x13, 0x47, 0x9C, 0xB7, 0x5D, 0x87,
-    0x15, 0xA1, 0x96, 0x29, 0x10, 0x7B, 0x9A, 0xC7, 0xF3, 0x91, 0x78, 0x6F, 0x9D, 0x9E, 0xB2, 0xB1,
-    0x32, 0x75, 0x19, 0x3D, 0xFF, 0x35, 0x8A, 0x7E, 0x6D, 0x54, 0xC6, 0x80, 0xC3, 0xBD, 0x0D, 0x57,
-    0xDF, 0xF5, 0x24, 0xA9, 0x3E, 0xA8, 0x43, 0xC9, 0xD7, 0x79, 0xD6, 0xF6, 0x7C, 0x22, 0xB9, 0x03,
-    0xE0, 0x0F, 0xEC, 0xDE, 0x7A, 0x94, 0xB0, 0xBC, 0xDC, 0xE8, 0x28, 0x50, 0x4E, 0x33, 0x0A, 0x4A,
-    0xA7, 0x97, 0x60, 0x73, 0x1E, 0x00, 0x62, 0x44, 0x1A, 0xB8, 0x38, 0x82, 0x64, 0x9F, 0x26, 0x41,
-    0xAD, 0x45, 0x46, 0x92, 0x27, 0x5E, 0x55, 0x2F, 0x8C, 0xA3, 0xA5, 0x7D, 0x69, 0xD5, 0x95, 0x3B,
-    0x07, 0x58, 0xB3, 0x40, 0x86, 0xAC, 0x1D, 0xF7, 0x30, 0x37, 0x6B, 0xE4, 0x88, 0xD9, 0xE7, 0x89,
-    0xE1, 0x1B, 0x83, 0x49, 0x4C, 0x3F, 0xF8, 0xFE, 0x8D, 0x53, 0xAA, 0x90, 0xCA, 0xD8, 0x85, 0x61,
-    0x20, 0x71, 0x67, 0xA4, 0x2D, 0x2B, 0x09, 0x5B, 0xCB, 0x9B, 0x25, 0xD0, 0xBE, 0xE5, 0x6C, 0x52,
-    0x59, 0xA6, 0x74, 0xD2, 0xE6, 0xF4, 0xB4, 0xC0, 0xD1, 0x66, 0xAF, 0xC2, 0x39, 0x4B, 0x63, 0xB6
-};
+// Note: S-box substitution is incorporated into the Ax lookup tables
+// The original S-box is not used directly in the optimized implementation
 
 // ============================================================================
 // GOST 2012 Utility Functions
 // ============================================================================
 
-// Load 64-bit value from byte array (little-endian)
-template<unsigned int DIGEST_BITS>
-uint64_t GOST2012<DIGEST_BITS>::load64(const uint8_t* src) {
-    return (static_cast<uint64_t>(src[0]) << 0)  |
-           (static_cast<uint64_t>(src[1]) << 8)  |
-           (static_cast<uint64_t>(src[2]) << 16) |
-           (static_cast<uint64_t>(src[3]) << 24) |
-           (static_cast<uint64_t>(src[4]) << 32) |
-           (static_cast<uint64_t>(src[5]) << 40) |
-           (static_cast<uint64_t>(src[6]) << 48) |
-           (static_cast<uint64_t>(src[7]) << 56);
-}
-
-// Store 64-bit value to byte array (little-endian)
-template<unsigned int DIGEST_BITS>
-void GOST2012<DIGEST_BITS>::store64(uint8_t* dst, uint64_t value) {
-    dst[0] = static_cast<uint8_t>(value >> 0);
-    dst[1] = static_cast<uint8_t>(value >> 8);
-    dst[2] = static_cast<uint8_t>(value >> 16);
-    dst[3] = static_cast<uint8_t>(value >> 24);
-    dst[4] = static_cast<uint8_t>(value >> 32);
-    dst[5] = static_cast<uint8_t>(value >> 40);
-    dst[6] = static_cast<uint8_t>(value >> 48);
-    dst[7] = static_cast<uint8_t>(value >> 56);
-}
-
-// 512-bit addition (x = x + y) - from reference implementation
+// 512-bit addition: x = x + y
+// Matches reference implementation add512() from gost3411-2012-core.c
 template<unsigned int DIGEST_BITS>
 void GOST2012<DIGEST_BITS>::add512(uint64_t x[8], const uint64_t y[8]) {
     uint64_t carry = 0;
     for (int i = 0; i < 8; i++) {
         const uint64_t left = x[i];
-        uint64_t sum = left + y[i] + carry;
+        const uint64_t sum = left + y[i] + carry;
         // Carry detection: if sum changed, check if it's less than left
         if (sum != left)
             carry = (sum < left) ? 1 : 0;
@@ -528,11 +486,12 @@ void GOST2012<DIGEST_BITS>::X(const uint64_t a[8], const uint64_t b[8], uint64_t
 }
 
 // ============================================================================
-// GOST 2012 Core Transformations (from reference implementation)
+// GOST 2012 Core Transformations
 // ============================================================================
 
 // XLPS - Combined X (XOR), L (Linear), P (Permutation), S (Substitution) transformation
-// Uses precomputed tables Ax for efficiency - matches reference implementation
+// Uses precomputed tables Ax for efficiency
+// Matches reference implementation XLPS() from gost3411-2012-ref.h
 template<unsigned int DIGEST_BITS>
 void GOST2012<DIGEST_BITS>::XLPS(const uint64_t x[8], const uint64_t y[8], uint64_t data[8]) {
     // Step 1: XOR x and y
@@ -547,45 +506,21 @@ void GOST2012<DIGEST_BITS>::XLPS(const uint64_t x[8], const uint64_t y[8], uint6
 
     // Step 2: Apply S-box, permutation, and linear transformation using precomputed tables
     // The Ax tables combine S-box substitution, bit permutation, and linear transformation
-    // Process 8 bytes (one from each uint64_t) - matches reference implementation
+    // Process 8 bytes (one from each uint64_t) at each iteration
     for (int i = 0; i < 8; i++) {
-        data[i]  = Ax[0][r0 & 0xFF];
-        data[i] ^= Ax[1][r1 & 0xFF];
-        data[i] ^= Ax[2][r2 & 0xFF];
-        data[i] ^= Ax[3][r3 & 0xFF];
-        data[i] ^= Ax[4][r4 & 0xFF];
-        data[i] ^= Ax[5][r5 & 0xFF];
-        data[i] ^= Ax[6][r6 & 0xFF];
-        data[i] ^= Ax[7][r7 & 0xFF];
-
-        // Shift to next byte
-        r0 >>= 8;
-        r1 >>= 8;
-        r2 >>= 8;
-        r3 >>= 8;
-        r4 >>= 8;
-        r5 >>= 8;
-        r6 >>= 8;
-        r7 >>= 8;
-    }
-}
-
-// E - Encryption function (implements the key schedule and 12 rounds)
-// This is NOT a separate function in reference - it's inlined in g()
-// Keeping for compatibility but matching reference behavior
-template<unsigned int DIGEST_BITS>
-void GOST2012<DIGEST_BITS>::E(uint64_t K[8], const uint64_t m[8], uint64_t state[8]) {
-    // Reference implementation does this differently - see g() below
-    // This function is kept for interface compatibility but not used
-    X(K, m, state);
-    for (int i = 0; i < 12; i++) {
-        XLPS(K, C[i].QWORD, K);
-        XLPS(state, K, state);
+        data[i]  = Ax[0][(r0 >> (i << 3)) & 0xFF];
+        data[i] ^= Ax[1][(r1 >> (i << 3)) & 0xFF];
+        data[i] ^= Ax[2][(r2 >> (i << 3)) & 0xFF];
+        data[i] ^= Ax[3][(r3 >> (i << 3)) & 0xFF];
+        data[i] ^= Ax[4][(r4 >> (i << 3)) & 0xFF];
+        data[i] ^= Ax[5][(r5 >> (i << 3)) & 0xFF];
+        data[i] ^= Ax[6][(r6 >> (i << 3)) & 0xFF];
+        data[i] ^= Ax[7][(r7 >> (i << 3)) & 0xFF];
     }
 }
 
 // g - Compression function (the heart of GOST 2012)
-// EXACTLY matches reference implementation gost3411-2012-core.c lines 122-140
+// EXACTLY matches reference implementation g() from gost3411-2012-core.c
 template<unsigned int DIGEST_BITS>
 void GOST2012<DIGEST_BITS>::g(uint64_t h[8], const uint64_t N[8], const uint64_t m[8]) {
     uint64_t Ki[8], data[8];
@@ -596,9 +531,7 @@ void GOST2012<DIGEST_BITS>::g(uint64_t h[8], const uint64_t N[8], const uint64_t
     // Starting E() - Ki = data
     std::memcpy(Ki, data, sizeof(Ki));
 
-    // XLPS(&Ki, (const union uint512_u *)&m[0], &data)
-    // In reference, m is unsigned char*, cast to uint512_u*
-    // Here m is already uint64_t[8], so we can use it directly
+    // XLPS(&Ki, m, &data)
     XLPS(Ki, m, data);
 
     // 11 rounds (i = 0 to 10)
@@ -624,10 +557,11 @@ void GOST2012<DIGEST_BITS>::g(uint64_t h[8], const uint64_t N[8], const uint64_t
 }
 
 // ============================================================================
-// GOST 2012 Main Hash Functions (from reference implementation)
+// GOST 2012 Main Hash Functions
 // ============================================================================
 
-// Initialize hash context - matches reference GOST34112012Init
+// Initialize hash context
+// Matches reference implementation GOST34112012Init() from gost3411-2012-core.c
 template<unsigned int DIGEST_BITS>
 void GOST2012<DIGEST_BITS>::Restart() {
     // Clear all state
@@ -648,44 +582,51 @@ void GOST2012<DIGEST_BITS>::Restart() {
     // else: already zeroed by memset for 512-bit
 }
 
-// Process a complete 512-bit block - matches reference stage2
+// Process a complete 512-bit (64-byte) block
+// Matches reference implementation stage2() from gost3411-2012-core.c
 template<unsigned int DIGEST_BITS>
-void GOST2012<DIGEST_BITS>::stage2(const uint64_t data[8]) {
-    // Apply compression function: h = g(h, N, data)
-    g(m_h, m_N, data);
+void GOST2012<DIGEST_BITS>::stage2(const uint8_t data[64]) {
+    union uint512_u m;
+    
+    // Copy data to m union
+    std::memcpy(&m, data, 64);
+
+    // Apply compression function: g(h, N, m)
+    g(m_h, m_N, m.QWORD);
 
     // Update block counter: N = N + 512
     add512(m_N, buffer512.QWORD);
 
-    // Update checksum: Sigma = Sigma + data
-    add512(m_Sigma, data);
+    // Update checksum: Sigma = Sigma + m
+    add512(m_Sigma, m.QWORD);
 }
 
-// Finalization stage (padding and final compressions) - matches reference stage3
+// Finalization stage (padding and final compressions)
+// Matches reference implementation stage3() from gost3411-2012-core.c
 template<unsigned int DIGEST_BITS>
 void GOST2012<DIGEST_BITS>::stage3() {
-    // Create length block BEFORE padding (length in bits of the final partial block)
-    uint64_t lengthBlock[8] = {0};
-    lengthBlock[0] = m_bufferLen * 8;  // Convert bytes to bits
+    union uint512_u buf;
+    std::memset(&buf, 0, sizeof(buf));
+    
+    // Set the length in bits of the final partial block
+    buf.QWORD[0] = m_bufferLen << 3;
 
     // Pad the buffer with 0x01 followed by zeros
-    m_buffer[m_bufferLen] = 0x01;
-    std::memset(m_buffer + m_bufferLen + 1, 0, 64 - m_bufferLen - 1);
-
-    // Convert buffer to uint64_t array
-    uint64_t data[8];
-    for (int i = 0; i < 8; i++) {
-        data[i] = load64(m_buffer + i * 8);
+    if (m_bufferLen < 64) {
+        m_buffer[m_bufferLen] = 0x01;
+        std::memset(m_buffer + m_bufferLen + 1, 0, 64 - m_bufferLen - 1);
     }
 
     // Process the padded block
-    g(m_h, m_N, data);
+    union uint512_u m;
+    std::memcpy(&m, m_buffer, 64);
+    g(m_h, m_N, m.QWORD);
 
-    // Update N with the length of the final block (BEFORE padding)
-    add512(m_N, lengthBlock);
+    // Update N with the length of the final block
+    add512(m_N, buf.QWORD);
 
-    // Update checksum with padded data
-    add512(m_Sigma, data);
+    // Update checksum with the final block
+    add512(m_Sigma, m.QWORD);
 
     // Final compressions with zero block
     // g(h, 0, N)
@@ -695,55 +636,56 @@ void GOST2012<DIGEST_BITS>::stage3() {
     g(m_h, buffer0.QWORD, m_Sigma);
 }
 
-// Update hash with new data - matches reference GOST34112012Update
+// Update hash with new data
+// Matches reference implementation GOST34112012Update() from gost3411-2012-core.c
 template<unsigned int DIGEST_BITS>
 void GOST2012<DIGEST_BITS>::Update(const CryptoPP::byte *input, size_t length) {
     const uint8_t* data = input;
+    size_t len = length;
 
     // Handle buffered data first
     if (m_bufferLen > 0) {
-        size_t toCopy = std::min(length, static_cast<size_t>(64 - m_bufferLen));
-        std::memcpy(m_buffer + m_bufferLen, data, toCopy);
-        m_bufferLen += toCopy;
-        data += toCopy;
-        length -= toCopy;
+        size_t chunksize = 64 - m_bufferLen;
+        if (chunksize > len)
+            chunksize = len;
+
+        std::memcpy(m_buffer + m_bufferLen, data, chunksize);
+        m_bufferLen += chunksize;
+        len -= chunksize;
+        data += chunksize;
 
         // If buffer is full, process it
         if (m_bufferLen == 64) {
-            uint64_t block[8];
-            for (int i = 0; i < 8; i++) {
-                block[i] = load64(m_buffer + i * 8);
-            }
-            stage2(block);
+            stage2(m_buffer);
             m_bufferLen = 0;
         }
     }
 
     // Process complete 64-byte blocks
-    while (length >= 64) {
-        uint64_t block[8];
-        for (int i = 0; i < 8; i++) {
-            block[i] = load64(data + i * 8);
-        }
-        stage2(block);
+    while (len >= 64) {
+        stage2(data);
         data += 64;
-        length -= 64;
+        len -= 64;
     }
 
     // Buffer remaining data
-    if (length > 0) {
-        std::memcpy(m_buffer, data, length);
-        m_bufferLen = length;
+    if (len > 0) {
+        std::memcpy(m_buffer, data, len);
+        m_bufferLen = len;
     }
 }
 
-// Finalize and output the hash - matches reference GOST34112012Final
+// Finalize and output the hash
+// Matches reference implementation GOST34112012Final() from gost3411-2012-core.c
 template<unsigned int DIGEST_BITS>
 void GOST2012<DIGEST_BITS>::TruncatedFinal(CryptoPP::byte *digest, size_t digestSize) {
     // Perform finalization
     stage3();
 
-    // Output the hash - matches reference implementation
+    // Reset buffer size
+    m_bufferLen = 0;
+
+    // Output the hash
     size_t outputSize = std::min(digestSize, static_cast<size_t>(DIGESTSIZE));
 
     if (DIGEST_BITS == 256) {

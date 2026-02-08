@@ -117,9 +117,6 @@ public:
     void Restart() override;
 
 private:
-    // S-box for GOST 2012
-    static const uint8_t SBOX[256];
-
     // Internal state (512 bits each)
     uint64_t m_h[8];         // Hash state
     uint64_t m_N[8];         // Block counter
@@ -128,19 +125,16 @@ private:
     size_t m_bufferLen;      // Current buffer length
 
     // Core compression function stages
-    void stage2(const uint64_t data[8]);
+    void stage2(const uint8_t data[64]);
     void stage3();
 
     // Helper functions
     static void g(uint64_t h[8], const uint64_t N[8], const uint64_t m[8]);
     static void XLPS(const uint64_t x[8], const uint64_t y[8], uint64_t data[8]);
-    static void E(uint64_t K[8], const uint64_t m[8], uint64_t state[8]);
     static void X(const uint64_t a[8], const uint64_t b[8], uint64_t result[8]);
 
     // Utility functions
     static void add512(uint64_t x[8], const uint64_t y[8]);
-    static uint64_t load64(const uint8_t* src);
-    static void store64(uint8_t* dst, uint64_t value);
 };
 
 // Common GOST 2012 variants
