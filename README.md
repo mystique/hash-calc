@@ -7,7 +7,7 @@ A modern, feature-rich Windows GUI application for computing and verifying file 
 ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 ![C++](https://img.shields.io/badge/C++-17-00599C?logo=c%2B%2B)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Algorithms](https://img.shields.io/badge/algorithms-50+-orange)
+![Algorithms](https://img.shields.io/badge/algorithms-53+-orange)
 
 </div>
 
@@ -53,7 +53,7 @@ A modern, feature-rich Windows GUI application for computing and verifying file 
 
 ### 🔐 Supported Hash Algorithms
 
-HashCalc supports **50+ cryptographic algorithms** organized into 4 categories:
+HashCalc supports **53+ cryptographic algorithms** organized into 4 categories:
 
 <details open>
 <summary><b>📊 Tab 1: SHA & MD Family</b></summary>
@@ -105,6 +105,9 @@ HashCalc supports **50+ cryptographic algorithms** organized into 4 categories:
 | **Whirlpool** | 512-bit | ISO/IEC standard hash function |
 | **SM3** | 256-bit | Chinese national standard |
 | **LSH** | 256/512-bit | Korean standard hash functions |
+| **GOST R 34.11-94** | 256-bit | Russian national hash standard (legacy) |
+| **GOST R 34.11-2012-256** | 256-bit | Modern Russian standard (Streebog-256) |
+| **GOST R 34.11-2012-512** | 512-bit | Modern Russian standard (Streebog-512) |
 
 </details>
 
@@ -117,7 +120,7 @@ HashCalc supports **50+ cryptographic algorithms** organized into 4 categories:
 - **About Dialog**: Professional about dialog with version information
   - Displays application version from resource file
   - Shows build date and copyright information
-  - Includes technology stack information (Win32++, Crypto++, BLAKE3, MD6, HAVAL)
+  - Includes technology stack information (Win32++, Crypto++, BLAKE3, MD6, HAVAL, GOST)
   - Provides GitHub repository link and contact information
 - **Command-Line Support**: Launch with file path or text as argument for quick hashing
   - Example: `HashCalc.exe "C:\path\to\file.txt"`
@@ -372,7 +375,7 @@ Leveraging the industry-standard Crypto++ library:
 - **BLAKE2**: BLAKE2b, BLAKE2s
 - **MD Family**: MD2, MD4, MD5
 - **RIPEMD**: RIPEMD-128, RIPEMD-160, RIPEMD-256, RIPEMD-320
-- **Others**: Tiger, Whirlpool, SM3, LSH-256, LSH-512
+- **Others**: Tiger, Whirlpool, SM3, LSH-256, LSH-512, GOST R 34.11-94, GOST R 34.11-2012-256, GOST R 34.11-2012-512
 - **Checksums**: CRC-32, Adler-32
 
 #### ⚡ Native C++ Implementations
@@ -427,6 +430,24 @@ Custom implementations for performance and flexibility:
 - Native implementations optimized for performance
 - Consistent interface with other hash algorithms
 - Ideal for error detection and data integrity checks
+
+</details>
+
+<details>
+<summary><b>GOST Family</b> - Russian national standards</summary>
+
+**Location**: `src/core/impl/native/GOST.{h,cpp}`
+
+- **GOST R 34.11-94**: Original Russian hash standard (256-bit)
+  - Based on GOST 28147-89 block cipher
+  - Uses Merkle-Damgård construction
+  - Legacy algorithm, maintained for compatibility
+- **GOST R 34.11-2012**: Modern Streebog hash functions
+  - **Streebog-256**: 256-bit output, fast performance
+  - **Streebog-512**: 512-bit output, maximum security
+  - Optimized implementation with precomputed lookup tables
+  - Complies with Russian Federal standard GOST R 34.11-2012
+  - Based on reference implementation by Alexey Degtyarev
 
 </details>
 
@@ -499,7 +520,9 @@ hash-calc/
     │           ├── BLAKE3.{h,cpp}     # BLAKE3 hash
     │           ├── MD6.{h,cpp}        # MD6 hash
     │           ├── Haval.{h,cpp}      # HAVAL hash
-    │           └── CRC.{h,cpp}        # CRC checksums
+    │           ├── CRC.{h,cpp}        # CRC checksums
+    │           ├── GOST.{h,cpp}       # GOST hash algorithms
+    │           └── GOST2012Tables.h   # Precomputed tables for GOST-2012
     │
     ├── 📁 ui/                     # User interface components
     │   ├── HashCalcDialog.{h,cpp}     # Main dialog window
@@ -723,6 +746,48 @@ If you encounter any issues or have questions:
 ---
 
 ## Changelog
+
+### 🚀 Version 1.3.0 - GOST Hash Algorithms
+
+**Release Date**: 2026-02-08
+
+#### ✨ New Features
+- **GOST Hash Algorithm Support**: Added three Russian Federal standard hash algorithms
+  - **GOST R 34.11-94**: Original 256-bit Russian hash standard
+    - Based on GOST 28147-89 block cipher encryption
+    - Uses Merkle-Damgård construction with compression function
+    - Maintained for legacy compatibility with older systems
+  - **GOST R 34.11-2012-256 (Streebog-256)**: Modern 256-bit hash
+    - Complies with Russian Federal standard GOST R 34.11-2012
+    - Optimized implementation with precomputed lookup tables
+    - Fast performance suitable for most applications
+  - **GOST R 34.11-2012-512 (Streebog-512)**: Modern 512-bit hash
+    - Maximum security variant of Streebog
+    - Same optimized architecture as Streebog-256
+    - Recommended for high-security applications
+- **Centralized Algorithm IDs**: Added `AlgorithmIds.h` header for centralized algorithm definitions
+  - Eliminates hardcoded algorithm lists across multiple source files
+  - Simplifies maintenance and reduces code duplication
+  - Single source of truth for all algorithm identifiers
+
+#### 🏗️ Refactoring
+- **GOST R 34.11-2012 Optimization**: Complete refactor matching reference implementation
+  - Removed intermediate S-box functions in favor of precomputed Ax lookup tables
+  - Simplified XLPS transformation with direct bit shift operations
+  - Changed stage2() to accept raw byte arrays for direct memory processing
+  - Regenerated Ax tables for optimized substitution and linear transformation
+  - Added copyright attribution to reference implementation by Alexey Degtyarev
+  - Improved code clarity and standard compliance
+- **Refactored Core UI Components**: Updated HashCalcDialog, TabViewChecksum, and ConfigManager to use centralized algorithm definitions
+
+#### 📝 Technical Details
+The GOST implementations are fully native C++ code:
+- **GOST-94**: Uses precomputed S-box lookup tables for GOST 28147-89 encryption rounds
+- **GOST-2012**: Implements Streebog with optimized Ax lookup tables (512 bytes × 64 tables)
+- Both integrate seamlessly with Crypto++ `HashTransformation` interface
+- Compatible with reference implementations and pass standard test vectors
+
+---
 
 ### 🔧 Version 1.2.1 - CRC Fixes & Memory Management
 
