@@ -85,12 +85,15 @@
 #define IDC_CRC64 4005
 #define IDC_CRC8 4006
 
-// Others Group (Tiger, Whirlpool, LSH, SM3)
+// Others Group (Tiger, Whirlpool, LSH, SM3, GOST)
 #define IDC_TIGER 4011
 #define IDC_WHIRLPOOL 4012
 #define IDC_LSH_256 4013
 #define IDC_SM3 4014
 #define IDC_LSH_512 4015
+#define IDC_GOST94 4016
+#define IDC_GOST2012_256 4017
+#define IDC_GOST2012_512 4018
 
 // ========== UI Elements ==========
 // Select/Clear buttons

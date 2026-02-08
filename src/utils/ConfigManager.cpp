@@ -1,5 +1,6 @@
 #include "ConfigManager.h"
 #include "../res/resource.h"
+#include "../core/AlgorithmIds.h"
 #include <Windows.h>
 #include <shlwapi.h>
 #include <sstream>
@@ -141,7 +142,10 @@ std::wstring ConfigManager::GetAlgorithmName(int algorithmId)
         {IDC_BLAKE2S, L"BLAKE2S"},
         {IDC_BLAKE3, L"BLAKE3"},
         {IDC_LSH_256, L"LSH-256"},
-        {IDC_LSH_512, L"LSH-512"}
+        {IDC_LSH_512, L"LSH-512"},
+        {IDC_GOST94, L"GOST-94"},
+        {IDC_GOST2012_256, L"GOST-256"},
+        {IDC_GOST2012_512, L"GOST-512"}
     };
     
     auto it = nameMap.find(algorithmId);
@@ -213,6 +217,9 @@ std::wstring ConfigManager::GetAlgorithmSection(int algorithmId)
         case IDC_SM3:
         case IDC_LSH_256:
         case IDC_LSH_512:
+        case IDC_GOST94:
+        case IDC_GOST2012_256:
+        case IDC_GOST2012_512:
             return L"Algorithms.Checksum_Others";
         
         default:
@@ -271,7 +278,10 @@ int ConfigManager::GetAlgorithmIdFromName(const std::wstring& name)
         {L"BLAKE2S", IDC_BLAKE2S},
         {L"BLAKE3", IDC_BLAKE3},
         {L"LSH-256", IDC_LSH_256},
-        {L"LSH-512", IDC_LSH_512}
+        {L"LSH-512", IDC_LSH_512},
+        {L"GOST-94", IDC_GOST94},
+        {L"GOST-256", IDC_GOST2012_256},
+        {L"GOST-512", IDC_GOST2012_512}
     };
     
     auto it = idMap.find(name);
@@ -300,27 +310,10 @@ bool ConfigManager::LoadConfig()
     
     // Load algorithm configurations from multiple sections
     m_algorithms.clear();
-    
-    // Read all algorithm states from their respective sections
-    int allAlgorithmIds[] = {
-        // Tab 1: SHA & MD
-        IDC_SHA_160, IDC_SHA_224, IDC_SHA_256, IDC_SHA_384, IDC_SHA_512,
-        IDC_MD2, IDC_MD4, IDC_MD5,
-        IDC_MD6_128, IDC_MD6_160, IDC_MD6_192, IDC_MD6_224, IDC_MD6_256, IDC_MD6_384, IDC_MD6_512,
-        // Tab 2: SHA-3 & Modern
-        IDC_SHA3_224, IDC_SHA3_256, IDC_SHA3_384, IDC_SHA3_512,
-        IDC_KECCAK_224, IDC_KECCAK_256, IDC_KECCAK_384, IDC_KECCAK_512,
-        IDC_SHAKE_128, IDC_SHAKE_256,
-        IDC_BLAKE2B, IDC_BLAKE2S, IDC_BLAKE3,
-        // Tab 3: HAVAL & RIPEMD
-        IDC_HAVAL_128, IDC_HAVAL_160, IDC_HAVAL_192, IDC_HAVAL_224, IDC_HAVAL_256,
-        IDC_RIPEMD_128, IDC_RIPEMD_160, IDC_RIPEMD_256, IDC_RIPEMD_320,
-        // Tab 4: Checksum & Others
-        IDC_CRC8, IDC_CRC16, IDC_CRC32, IDC_CRC32C, IDC_CRC64, IDC_ADLER32,
-        IDC_TIGER, IDC_WHIRLPOOL, IDC_SM3, IDC_LSH_256, IDC_LSH_512
-    };
-    
-    for (int id : allAlgorithmIds) {
+
+    // Use centralized algorithm ID list instead of hardcoding
+    for (size_t i = 0; i < core::ALL_ALGORITHM_COUNT; i++) {
+        int id = core::ALL_ALGORITHM_IDS[i];
         std::wstring name = GetAlgorithmName(id);
         std::wstring section = GetAlgorithmSection(id);
         if (!name.empty()) {
