@@ -45,10 +45,8 @@ jobs:
 
     - name: Configure CMake
       run: |
-        cmake --preset default
+        cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
       shell: cmd
-      env:
-        CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
 
     - name: Build Release
       run: |
