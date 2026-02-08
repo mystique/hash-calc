@@ -122,9 +122,14 @@ HashCalc supports **53+ cryptographic algorithms** organized into 4 categories:
   - Shows build date and copyright information
   - Includes technology stack information (Win32++, Crypto++, BLAKE3, MD6, HAVAL, GOST)
   - Provides GitHub repository link and contact information
-- **Command-Line Support**: Launch with file path or text as argument for quick hashing
-  - Example: `HashCalc.exe "C:\path\to\file.txt"`
-  - Automatically loads the specified file and prepares for calculation
+- **Full Command-Line Interface**: Complete CLI support for automation and scripting
+  - **Help & Information**: Display help (`--help`) and list algorithms (`--list`)
+  - **Console Mode**: Direct hash calculation with `-f/--file` or `-t/--text` flags
+  - **Algorithm Selection**: Specify one or multiple algorithms with `-a/--algorithm`
+  - **Mixed Mode**: Use `-a` in GUI mode to pre-select specific algorithms
+  - **Smart Detection**: Automatically detects file vs. text input
+  - **UTF-8 Support**: Full Unicode support in console output
+  - Example: `HashCalc.exe -f "file.txt" -a SHA256 -a MD5`
 - **Keyboard Shortcuts**: Efficient keyboard navigation for power users
   - Press **Enter** in file path field to validate and focus on Calculate button
   - Press **Enter** in text input field to immediately start calculation
@@ -223,24 +228,64 @@ Replace `[vcpkg-root]` with your vcpkg installation path.
 
 ## Usage
 
-### Command-Line Usage
+### Dual-Mode Operation
 
-HashCalc supports command-line arguments for quick hashing:
+HashCalc intelligently switches between GUI and console modes based on how you launch it:
 
+#### GUI Mode (Default)
+Launch the graphical interface by double-clicking or running without console flags:
 ```bash
-# Hash a file by passing its path as an argument
+# Launch GUI (no console window)
+HashCalc.exe
+
+# Load a file in GUI mode
 HashCalc.exe "C:\path\to\file.txt"
 
-# Also works with relative paths
-HashCalc.exe "document.pdf"
+# Load text in GUI mode
+HashCalc.exe "Hello World"
+
+# GUI mode with pre-selected algorithms
+HashCalc.exe "file.txt" -a MD5 -a SHA256
 ```
 
-The application will:
-- Automatically load the specified file path into the file input field
-- Switch to File mode if not already selected
-- Prepare the interface for immediate calculation
+#### Console Mode
+Run with console flags (`-t/-f` + `-a`) to get direct console output:
 
-> **Note**: Command-line mode only loads the file path; you still need to select algorithms and click Calculate.
+```bash
+# Display help information
+HashCalc.exe --help
+HashCalc.exe -h
+HashCalc.exe /?
+
+# List all supported algorithms
+HashCalc.exe --list
+HashCalc.exe -l
+
+# Calculate file hash in console mode
+HashCalc.exe -f "C:\path\to\file.txt" -a SHA256
+HashCalc.exe --file "document.pdf" --algorithm MD5 --algorithm SHA256
+
+# Calculate text hash in console mode
+HashCalc.exe -t "Hello World" -a BLAKE3
+HashCalc.exe --text "sample text" --algorithm SHA3-256
+```
+
+**Console Mode Features:**
+- ✅ Automatically attaches to parent console (PowerShell/CMD)
+- ✅ Outputs hash results directly to terminal
+- ✅ Creates new console window when double-clicked with arguments
+- ✅ UTF-8 encoding support for international characters
+- ✅ No GUI window appears in console mode
+- ✅ Support for multiple algorithms in single command
+- ✅ Clean, parsable output format
+
+**Mode Selection Logic:**
+- **Console Mode**: When using `-t/--text` or `-f/--file` flags with `-a/--algorithm`
+- **GUI Mode**: All other cases (no flags, file/text path only, or with `-a` but no `-t/-f`)
+
+> **Note**: The `-a/--algorithm` flag works in both modes:
+> - In **console mode** (with `-t/-f`): Required, specifies which algorithms to calculate
+> - In **GUI mode** (without `-t/-f`): Optional, pre-selects algorithms in the interface
 
 ### Computing File Hash
 
@@ -284,7 +329,8 @@ To verify that a file hasn't been tampered with:
 | **⚡ Multi-Algorithm** | Select multiple algorithms to compute all hashes simultaneously |
 | **💾 Auto-Save** | Your last selected algorithms are automatically saved for next time |
 | **📊 Progress Bar** | Visual progress indicator integrated with Windows taskbar |
-| **💻 Command-Line** | Launch with file path as argument: `HashCalc.exe "file.txt"` |
+| **💻 Command-Line** | Full CLI support: `HashCalc.exe -f "file.txt" -a SHA256 -a MD5` |
+| **🎯 Mixed Mode** | Pre-select algorithms in GUI: `HashCalc.exe "file.txt" -a SHA256` |
 
 ---
 
@@ -747,6 +793,62 @@ If you encounter any issues or have questions:
 
 ## Changelog
 
+### 🚀 Version 1.4.0 - Enhanced Command-Line Interface
+
+**Release Date**: 2026-02-08
+
+#### ✨ New Features
+- **Full Command-Line Interface**: Complete CLI support for automated hash calculations
+  - **Help System**: Display comprehensive help with `--help`, `-h`, or `/?`
+  - **Algorithm Listing**: List all 53+ supported algorithms with `--list` or `-l`
+  - **File Hash Calculation**: Calculate file hashes in console mode using `-f/--file`
+  - **Text Hash Calculation**: Calculate text hashes in console mode using `-t/--text`
+  - **Algorithm Selection**: Specify one or multiple algorithms with `-a/--algorithm`
+  - **Mixed Mode Support**: Use `-a` in GUI mode to pre-select specific algorithms
+- **Intelligent Mode Switching**: Automatically switches between GUI and console modes
+  - Console mode: Activated when using `-t/-f` flags with `-a` algorithm specification
+  - GUI mode: Default behavior, or when launched with file/text input without flags
+  - Smart console attachment: Attaches to parent console (PowerShell/CMD) or creates new one
+- **Enhanced Input Detection**: Automatically detects whether input is file path or text content
+  - File detection: Checks if path exists and is a valid file
+  - Text fallback: Treats input as text if file doesn't exist
+  - Quoted string support: Properly handles paths and text with spaces
+
+#### 📝 Command-Line Examples
+```bash
+# Display help
+HashCalc.exe --help
+
+# List all algorithms
+HashCalc.exe --list
+
+# GUI mode examples
+HashCalc.exe test.txt                    # Load file in GUI
+HashCalc.exe "Hello World"                # Load text in GUI
+HashCalc.exe test.txt -a MD5 -a SHA256   # GUI with pre-selected algorithms
+
+# Console mode examples
+HashCalc.exe -f test.txt -a SHA256 -a MD5        # Calculate file hash
+HashCalc.exe -t "Hello World" -a BLAKE3          # Calculate text hash
+HashCalc.exe --file "data.bin" --algorithm CRC32 # Full parameter names
+```
+
+#### 🎯 Improvements
+- **UTF-8 Console Support**: Full Unicode support in console mode for international characters
+- **Clean Output Format**: Professional console output with proper formatting
+- **Error Handling**: Comprehensive error messages for invalid inputs or missing parameters
+- **Flexible Parameter Parsing**: Support for both short (`-a`) and long (`--algorithm`) parameter formats
+- **Multiple Algorithm Support**: Calculate multiple hashes in a single command
+
+#### 📋 Technical Details
+- Console attachment mechanism for seamless integration with Windows terminal
+- Automatic console allocation when launched with double-click
+- Smart wait logic: Pauses console window when allocated (vs. attached to parent)
+- Algorithm validation against registered algorithms in factory
+- Efficient batch processing of multiple algorithms in single file read
+
+---
+
 ### 🚀 Version 1.3.0 - GOST Hash Algorithms
 
 **Release Date**: 2026-02-08
@@ -910,13 +1012,11 @@ Potential features for future releases:
 
 - [ ] **Hash Comparison Tool** - Compare two files side-by-side
 - [ ] **Export Results** - Save results to CSV, JSON, or TXT files
-- [ ] **Enhanced CLI Mode** - Full command-line interface for batch processing and automation
-  - Current version supports file path as argument; future will add headless operation
-  - Planned: `HashCalc.exe --file "path" --algo SHA256 --output result.txt`
 - [ ] **Hash File Support** - Read/write .md5, .sha256, .sfv files
 - [ ] **Context Menu Integration** - Right-click files in Windows Explorer
 - [ ] **Dark Mode** - Modern dark theme support
 - [ ] **Portable Mode** - Run without installation, store config in app folder
+- [x] **Enhanced CLI Mode** - ✅ Full command-line interface for batch processing and automation (Added in v1.4.0)
 
 ### Under Consideration
 

@@ -46,7 +46,11 @@ CHashCalcDialog::CHashCalcDialog()
     m_pViewChecksum(nullptr),
     m_currentAlgorithmIndex(0),
     m_totalAlgorithms(0),
-    m_lastReportedPercentage(-1) {
+    m_lastReportedPercentage(-1),
+    m_autoStartCalculation(false),
+    m_cmdLineHavalPass3(false),
+    m_cmdLineHavalPass4(false),
+    m_cmdLineHavalPass5(false) {
   // Initialize NOTIFYICONDATA structure
   ZeroMemory(&m_nid, sizeof(m_nid));
 }
@@ -65,6 +69,14 @@ CHashCalcDialog::~CHashCalcDialog() {
 
 void CHashCalcDialog::SetCommandLineInput(const std::wstring& input) {
   m_cmdLineInput = input;
+}
+
+void CHashCalcDialog::SetCommandLineAlgorithms(const std::vector<std::wstring>& algorithms) {
+  m_cmdLineAlgorithms = algorithms;
+}
+
+void CHashCalcDialog::SetAutoStartCalculation(bool autoStart) {
+  m_autoStartCalculation = autoStart;
 }
 
 BOOL CHashCalcDialog::PreTranslateMessage(MSG& msg) {
@@ -207,13 +219,69 @@ BOOL CHashCalcDialog::OnInitDialog() {
       SetDlgItemText(IDC_EDIT_TEXT, m_cmdLineInput.c_str());
     }
 
+    // Process algorithm parameters if specified
+    if (!m_cmdLineAlgorithms.empty()) {
+      // First, clear all current selections
+      m_pViewSHA->ClearAll();
+      m_pViewSHA3->ClearAll();
+      m_pViewHAVAL->ClearAll();
+      m_pViewChecksum->ClearAll();
+      
+      // Convert algorithm names to IDs and select them
+      for (const auto& algoName : m_cmdLineAlgorithms) {
+        int algoId = m_configManager.GetAlgorithmIdFromName(algoName);
+        if (algoId != 0) {
+          // Check if this is a HAVAL algorithm and extract pass information
+          if (algoId >= IDC_HAVAL_128 && algoId <= IDC_HAVAL_256) {
+            // Extract pass number from algorithm name (e.g., "HAVAL-3-256")
+            if (algoName.find(L"HAVAL-") == 0 && algoName.length() >= 11) {
+              wchar_t passChar = algoName[6];  // Position of pass number
+              if (passChar == L'3') m_cmdLineHavalPass3 = true;
+              else if (passChar == L'4') m_cmdLineHavalPass4 = true;
+              else if (passChar == L'5') m_cmdLineHavalPass5 = true;
+            }
+          }
+          
+          // Find which view contains this algorithm and set it
+          auto shaSta = m_pViewSHA->GetAlgorithmStates();
+          auto sha3Sta = m_pViewSHA3->GetAlgorithmStates();
+          auto havalSta = m_pViewHAVAL->GetAlgorithmStates();
+          auto checksumSta = m_pViewChecksum->GetAlgorithmStates();
+          
+          if (shaSta.find(algoId) != shaSta.end()) {
+            shaSta[algoId] = true;
+            m_pViewSHA->SetAlgorithmStates(shaSta);
+          } else if (sha3Sta.find(algoId) != sha3Sta.end()) {
+            sha3Sta[algoId] = true;
+            m_pViewSHA3->SetAlgorithmStates(sha3Sta);
+          } else if (havalSta.find(algoId) != havalSta.end()) {
+            havalSta[algoId] = true;
+            m_pViewHAVAL->SetAlgorithmStates(havalSta);
+          } else if (checksumSta.find(algoId) != checksumSta.end()) {
+            checksumSta[algoId] = true;
+            m_pViewChecksum->SetAlgorithmStates(checksumSta);
+          }
+        }
+      }
+      
+      // Set HAVAL pass states if any HAVAL algorithms were specified
+      if (m_cmdLineHavalPass3 || m_cmdLineHavalPass4 || m_cmdLineHavalPass5) {
+        m_pViewHAVAL->SetHavalPassStates(m_cmdLineHavalPass3, m_cmdLineHavalPass4, m_cmdLineHavalPass5);
+      }
+      
+      // Update tab names to reflect the new selections
+      UpdateTabNames();
+    }
+    // If no algorithms specified, use config (already loaded)
+
     // Update button states after input is set
     UpdateButtonStates();
 
-    // Automatically start calculation if any algorithm is selected
-    // If no algorithm is selected, the normal logic will prompt the user
-    PostMessage(WM_COMMAND, MAKEWPARAM(IDC_BUTTON_CALCULATE, BN_CLICKED),
-                reinterpret_cast<LPARAM>(GetDlgItem(IDC_BUTTON_CALCULATE).GetHwnd()));
+    // Automatically start calculation if requested
+    if (m_autoStartCalculation) {
+      PostMessage(WM_COMMAND, MAKEWPARAM(IDC_BUTTON_CALCULATE, BN_CLICKED),
+                  reinterpret_cast<LPARAM>(GetDlgItem(IDC_BUTTON_CALCULATE).GetHwnd()));
+    }
   }
 
   return TRUE;

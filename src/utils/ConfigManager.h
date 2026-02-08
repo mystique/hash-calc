@@ -40,6 +40,9 @@ public:
     bool GetHavalPass3() const;
     bool GetHavalPass4() const;
     bool GetHavalPass5() const;
+    
+    // Convert algorithm name to ID (public for command-line use)
+    int GetAlgorithmIdFromName(const std::wstring& name);
 
 private:
     std::wstring m_configFilePath;
@@ -60,7 +63,6 @@ private:
     
     // Convert algorithm ID to readable name
     std::wstring GetAlgorithmName(int algorithmId);
-    int GetAlgorithmIdFromName(const std::wstring& name);
     
     // Get the INI section for an algorithm based on its ID
     std::wstring GetAlgorithmSection(int algorithmId);

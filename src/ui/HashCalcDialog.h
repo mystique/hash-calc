@@ -42,6 +42,12 @@ public:
 
   // Set command line argument (file path or text)
   void SetCommandLineInput(const std::wstring& input);
+  
+  // Set command line algorithms
+  void SetCommandLineAlgorithms(const std::vector<std::wstring>& algorithms);
+  
+  // Set auto-start calculation flag
+  void SetAutoStartCalculation(bool autoStart);
 
 protected:
   // Virtual function overrides
@@ -141,6 +147,13 @@ private:
 
   // Command line input (file path or text)
   std::wstring m_cmdLineInput;
+  std::vector<std::wstring> m_cmdLineAlgorithms;
+  bool m_autoStartCalculation;
+  
+  // HAVAL pass states for command line
+  bool m_cmdLineHavalPass3;
+  bool m_cmdLineHavalPass4;
+  bool m_cmdLineHavalPass5;
 };
 
 #endif // HASH_CALC_DIALOG_H

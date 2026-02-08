@@ -230,15 +230,29 @@ std::wstring ConfigManager::GetAlgorithmSection(int algorithmId)
 int ConfigManager::GetAlgorithmIdFromName(const std::wstring& name)
 {
     // Reverse map from name to ID
+    // NOTE: Names should match those registered in HashAlgorithmFactory (case-sensitive)
+    // but we also provide common aliases for user convenience
     static std::map<std::wstring, int> idMap = {
+        // SHA algorithms (with aliases)
         {L"SHA-1", IDC_SHA_160},
+        {L"SHA1", IDC_SHA_160},
+        {L"SHA-160", IDC_SHA_160},
+        {L"SHA160", IDC_SHA_160},
         {L"SHA-224", IDC_SHA_224},
+        {L"SHA224", IDC_SHA_224},
         {L"SHA-256", IDC_SHA_256},
+        {L"SHA256", IDC_SHA_256},
         {L"SHA-384", IDC_SHA_384},
+        {L"SHA384", IDC_SHA_384},
         {L"SHA-512", IDC_SHA_512},
+        {L"SHA512", IDC_SHA_512},
+        
+        // MD algorithms
         {L"MD2", IDC_MD2},
         {L"MD4", IDC_MD4},
         {L"MD5", IDC_MD5},
+        
+        // MD6 algorithms
         {L"MD6-128", IDC_MD6_128},
         {L"MD6-160", IDC_MD6_160},
         {L"MD6-192", IDC_MD6_192},
@@ -246,42 +260,101 @@ int ConfigManager::GetAlgorithmIdFromName(const std::wstring& name)
         {L"MD6-256", IDC_MD6_256},
         {L"MD6-384", IDC_MD6_384},
         {L"MD6-512", IDC_MD6_512},
+        
+        // SHA-3 algorithms
         {L"SHA3-224", IDC_SHA3_224},
         {L"SHA3-256", IDC_SHA3_256},
         {L"SHA3-384", IDC_SHA3_384},
         {L"SHA3-512", IDC_SHA3_512},
+        
+        // HAVAL algorithms (all rounds variants)
         {L"HAVAL-128", IDC_HAVAL_128},
         {L"HAVAL-160", IDC_HAVAL_160},
         {L"HAVAL-192", IDC_HAVAL_192},
         {L"HAVAL-224", IDC_HAVAL_224},
         {L"HAVAL-256", IDC_HAVAL_256},
+        {L"HAVAL-3-128", IDC_HAVAL_128},
+        {L"HAVAL-3-160", IDC_HAVAL_160},
+        {L"HAVAL-3-192", IDC_HAVAL_192},
+        {L"HAVAL-3-224", IDC_HAVAL_224},
+        {L"HAVAL-3-256", IDC_HAVAL_256},
+        {L"HAVAL-4-128", IDC_HAVAL_128},
+        {L"HAVAL-4-160", IDC_HAVAL_160},
+        {L"HAVAL-4-192", IDC_HAVAL_192},
+        {L"HAVAL-4-224", IDC_HAVAL_224},
+        {L"HAVAL-4-256", IDC_HAVAL_256},
+        {L"HAVAL-5-128", IDC_HAVAL_128},
+        {L"HAVAL-5-160", IDC_HAVAL_160},
+        {L"HAVAL-5-192", IDC_HAVAL_192},
+        {L"HAVAL-5-224", IDC_HAVAL_224},
+        {L"HAVAL-5-256", IDC_HAVAL_256},
+        
+        // RIPEMD algorithms
         {L"RIPEMD-128", IDC_RIPEMD_128},
         {L"RIPEMD-160", IDC_RIPEMD_160},
         {L"RIPEMD-256", IDC_RIPEMD_256},
         {L"RIPEMD-320", IDC_RIPEMD_320},
+        
+        // Checksums (support both formats for user convenience)
         {L"CRC8", IDC_CRC8},
+        {L"CRC-8", IDC_CRC8},       // Factory name
         {L"CRC16", IDC_CRC16},
-        {L"CRC32", IDC_CRC32},
+        {L"CRC-16", IDC_CRC16},     // Factory name
+        {L"CRC32", IDC_CRC32},      // Factory name (no hyphen)
+        {L"CRC-32", IDC_CRC32},     // Alias
         {L"CRC32C", IDC_CRC32C},
+        {L"CRC-32C", IDC_CRC32C},   // Factory name
         {L"CRC64", IDC_CRC64},
+        {L"CRC-64", IDC_CRC64},     // Factory name
         {L"ADLER32", IDC_ADLER32},
+        {L"Adler32", IDC_ADLER32},  // Factory name (capitalized)
+        
+        // Keccak (support both uppercase and proper case)
         {L"KECCAK-224", IDC_KECCAK_224},
+        {L"Keccak-224", IDC_KECCAK_224},  // Factory name (capitalized)
         {L"KECCAK-256", IDC_KECCAK_256},
+        {L"Keccak-256", IDC_KECCAK_256},  // Factory name (capitalized)
         {L"KECCAK-384", IDC_KECCAK_384},
+        {L"Keccak-384", IDC_KECCAK_384},  // Factory name (capitalized)
         {L"KECCAK-512", IDC_KECCAK_512},
+        {L"Keccak-512", IDC_KECCAK_512},  // Factory name (capitalized)
+        
+        // SHAKE (support both with and without hyphen)
         {L"SHAKE-128", IDC_SHAKE_128},
+        {L"SHAKE128", IDC_SHAKE_128},     // Factory name (no hyphen)
         {L"SHAKE-256", IDC_SHAKE_256},
+        {L"SHAKE256", IDC_SHAKE_256},     // Factory name (no hyphen)
+        
+        // Others (support both uppercase and proper case)
         {L"TIGER", IDC_TIGER},
-        {L"SM3", IDC_SM3},
+        {L"Tiger", IDC_TIGER},            // Factory name (capitalized)
+        {L"SM3", IDC_SM3},                // Factory name
         {L"WHIRLPOOL", IDC_WHIRLPOOL},
+        {L"Whirlpool", IDC_WHIRLPOOL},    // Factory name (capitalized)
+        
+        // BLAKE (support both uppercase and lowercase b/s)
         {L"BLAKE2B", IDC_BLAKE2B},
+        {L"BLAKE2b", IDC_BLAKE2B},        // Factory name (lowercase b)
         {L"BLAKE2S", IDC_BLAKE2S},
-        {L"BLAKE3", IDC_BLAKE3},
-        {L"LSH-256", IDC_LSH_256},
-        {L"LSH-512", IDC_LSH_512},
+        {L"BLAKE2s", IDC_BLAKE2S},        // Factory name (lowercase s)
+        {L"BLAKE3", IDC_BLAKE3},          // Factory name
+        
+        // LSH
+        {L"LSH-256", IDC_LSH_256},        // Factory name
+        {L"LSH-512", IDC_LSH_512},        // Factory name
+        
+        // GOST (support multiple name formats)
         {L"GOST-94", IDC_GOST94},
+        {L"GOST94", IDC_GOST94},
+        {L"GOST-R-34.11-94", IDC_GOST94},           // Factory name
         {L"GOST-256", IDC_GOST2012_256},
-        {L"GOST-512", IDC_GOST2012_512}
+        {L"GOST256", IDC_GOST2012_256},
+        {L"GOST-2012-256", IDC_GOST2012_256},
+        {L"GOST-R-34.11-2012-256", IDC_GOST2012_256}, // Factory name
+        {L"GOST-512", IDC_GOST2012_512},
+        {L"GOST512", IDC_GOST2012_512},
+        {L"GOST-2012-512", IDC_GOST2012_512},
+        {L"GOST-R-34.11-2012-512", IDC_GOST2012_512}  // Factory name
     };
     
     auto it = idMap.find(name);
