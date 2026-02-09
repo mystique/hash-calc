@@ -352,45 +352,45 @@ To verify that a file hasn't been tampered with:
 The application follows a clean, layered architecture with clear separation of concerns:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    UI Layer                                 │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  Win32++ Tab-Based Architecture                     │   │
-│  │  • HashCalcDialog (Main Window)                     │   │
-│  │  • CTab Control (Tab Management)                    │   │
-│  │  • TabViewBase (Base Class for Tab Views)           │   │
-│  │  • TabViewSHA (SHA & MD Family)                     │   │
-│  │  • TabViewSHA3 (SHA-3 & Modern Algorithms)          │   │
-│  │  • TabViewHAVAL (HAVAL & RIPEMD)                    │   │
-│  │  • TabViewChecksum (Checksum & Others)              │   │
-│  │  • System Tray Integration (Minimize-to-Tray)       │   │
-│  │  • HoverButton (Custom Controls)                    │   │
-│  └─────────────────────────────────────────────────────┘   │
-└───────────────────────────┬─────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│                    UI Layer                               │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │  Win32++ Tab-Based Architecture                     │  │
+│  │  • HashCalcDialog (Main Window)                     │  │
+│  │  • CTab Control (Tab Management)                    │  │
+│  │  • TabViewBase (Base Class for Tab Views)           │  │
+│  │  • TabViewSHA (SHA & MD Family)                     │  │
+│  │  • TabViewSHA3 (SHA-3 & Modern Algorithms)          │  │
+│  │  • TabViewHAVAL (HAVAL & RIPEMD)                    │  │
+│  │  • TabViewChecksum (Checksum & Others)              │  │
+│  │  • System Tray Integration (Minimize-to-Tray)       │  │
+│  │  • HoverButton (Custom Controls)                    │  │
+│  └─────────────────────────────────────────────────────┘  │
+└───────────────────────────┬───────────────────────────────┘
                             │
-┌───────────────────────────▼─────────────────────────────────┐
-│                    Core Layer                               │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  Hash Algorithm Factory                             │   │
-│  │  • HashAlgorithmFactory (Factory Pattern)           │   │
-│  │  • IHashAlgorithm (Abstract Interface)              │   │
-│  │  • Algorithm Registration System                    │   │
-│  └─────────────────────────────────────────────────────┘   │
-└───────────────────────────┬─────────────────────────────────┘
+┌───────────────────────────▼───────────────────────────────┐
+│                    Core Layer                             │
+│  ┌─────────────────────────────────────────────────────┐  │
+│  │  Hash Algorithm Factory                             │  │
+│  │  • HashAlgorithmFactory (Factory Pattern)           │  │
+│  │  • IHashAlgorithm (Abstract Interface)              │  │
+│  │  • Algorithm Registration System                    │  │
+│  └─────────────────────────────────────────────────────┘  │
+└───────────────────────────┬───────────────────────────────┘
                             │
-┌───────────────────────────▼─────────────────────────────────┐
-│              Implementation Layer                           │
-│  ┌──────────────────────┐  ┌──────────────────────────┐    │
-│  │  Crypto++ Algorithms │  │  Native C++ Algorithms   │    │
-│  │  • SHA-1, SHA-2      │  │  • BLAKE3 (Pure C++)     │    │
-│  │  • SHA-3, Keccak     │  │  • MD6 (Native)          │    │
-│  │  • BLAKE2, SHAKE     │  │  • HAVAL (Native)        │    │
-│  │  • MD2, MD4, MD5     │  │  • CRC Family (Native)   │    │
-│  │  • RIPEMD, Tiger     │  │                          │    │
-│  │  • Whirlpool         │  │                          │    │
-│  │  • SM3, LSH          │  │                          │    │
-│  └──────────────────────┘  └──────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
+┌───────────────────────────▼──────────────────────────────┐
+│              Implementation Layer                        │
+│  ┌──────────────────────┐  ┌──────────────────────────┐  │
+│  │  Crypto++ Algorithms │  │  Native C++ Algorithms   │  │
+│  │  • SHA-1, SHA-2      │  │  • BLAKE3 (Pure C++)     │  │
+│  │  • SHA-3, Keccak     │  │  • MD6 (Native)          │  │
+│  │  • BLAKE2, SHAKE     │  │  • HAVAL (Native)        │  │
+│  │  • MD2, MD4, MD5     │  │  • CRC Family (Native)   │  │
+│  │  • RIPEMD, Tiger     │  │                          │  │
+│  │  • Whirlpool         │  │                          │  │
+│  │  • SM3, LSH          │  │                          │  │
+│  └──────────────────────┘  └──────────────────────────┘  │
+└──────────────────────────────────────────────────────────┘
 ```
 
 ### Key Components
@@ -421,7 +421,7 @@ Leveraging the industry-standard Crypto++ library:
 - **BLAKE2**: BLAKE2b, BLAKE2s
 - **MD Family**: MD2, MD4, MD5
 - **RIPEMD**: RIPEMD-128, RIPEMD-160, RIPEMD-256, RIPEMD-320
-- **Others**: Tiger, Whirlpool, SM3, LSH-256, LSH-512, GOST R 34.11-94, GOST R 34.11-2012-256, GOST R 34.11-2012-512
+- **Others**: Tiger, Whirlpool, SM3, LSH-256, LSH-512
 - **Checksums**: CRC-32, Adler-32
 
 #### ⚡ Native C++ Implementations
