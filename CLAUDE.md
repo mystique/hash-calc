@@ -118,7 +118,7 @@ The application uses a **Factory Pattern** with automatic registration for exten
 ```
 src/
 ├── app/
-│   └── main.cpp              # Entry point, CLI parsing, console/GUI mode switching
+│   └── main.cpp              # Entry point, GUI mode initialization
 ├── core/
 │   ├── HashAlgorithmFactory  # Factory pattern implementation
 │   ├── IHashAlgorithm        # Abstract interface
@@ -143,6 +143,7 @@ src/
 │   ├── TabView*              # Individual tab implementations
 │   └── HoverButton           # Custom button control
 └── utils/
+    ├── CommandLineParser     # Command-line argument parsing & console mode
     ├── ConfigManager         # Registry-based config persistence
     └── EditUtils             # Text utility functions
 
@@ -252,8 +253,8 @@ static HashAlgorithmRegistrar<MyAlgorithmHash> registrar_myalgo("MyAlgorithm");
 The application supports both GUI and console modes with intelligent mode switching:
 
 ### Mode Selection Logic
-- **Console Mode**: When using `-t`/`--text` OR `-f`/`--file` flags WITH `-a`/`--algorithm`
-- **GUI Mode**: All other cases (no flags, input only, or `-a` without `-t`/`-f`)
+- **Console Mode**: When using `-t`/`--text` OR `-f`/`--file` flags (requires `-a`/`--algorithm` or `-A`/`--all`)
+- **GUI Mode**: All other cases (no flags, input only, or `-a`/`-A` without `-t`/`-f`)
 
 ### Console Mode Examples
 ```bash
@@ -265,9 +266,17 @@ HashCalc.exe --list
 HashCalc.exe -f "file.txt" -a SHA256 -a MD5
 HashCalc.exe --file "document.pdf" --algorithm BLAKE3
 
+# Batch processing with all algorithms
+HashCalc.exe -f "file.txt" -A
+HashCalc.exe -f "file.txt" --all
+
 # Text hashing
 HashCalc.exe -t "Hello World" -a SHA256
 HashCalc.exe --text "sample" --algorithm MD5
+
+# Lowercase hex output
+HashCalc.exe -f "file.txt" -a SHA256 -c
+HashCalc.exe -t "text" -A --lowercase
 ```
 
 ### GUI Mode Examples
@@ -283,13 +292,24 @@ HashCalc.exe "Hello World"
 
 # GUI with pre-selected algorithms
 HashCalc.exe "file.txt" -a MD5 -a SHA256
+
+# GUI with all algorithms pre-selected
+HashCalc.exe "file.txt" -A
 ```
 
 ### Implementation Details
-- Console attachment: [`src/app/main.cpp`](src/app/main.cpp) `AttachConsoleWindow()`
-- Attaches to parent console (PowerShell/CMD) or allocates new one
-- UTF-8 console output support for Unicode characters
-- Algorithm validation against factory registry
+- **Command-line parsing**: [`src/utils/CommandLineParser.{h,cpp}`](src/utils/CommandLineParser.h)
+  - Handles mode detection (GUI vs Console)
+  - Parses algorithm parameters (`-a`, `-A`, `-c`)
+  - Maps algorithm names between display and factory formats
+  - Supports HAVAL pass number extraction (e.g., "HAVAL-3-256")
+- **Console management**:
+  - Attaches to parent console (PowerShell/CMD) or allocates new one
+  - UTF-8 console output support for Unicode characters
+  - Smart wait logic: Pauses when console is allocated vs. attached
+- **Algorithm validation**: Validates against factory registry
+- **Output formatting**: Uppercase (default) or lowercase (`-c`) hex output
+- **Performance timing**: Displays calculation time in console mode
 
 ## Configuration Management
 

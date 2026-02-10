@@ -126,10 +126,13 @@ HashCalc supports **53+ cryptographic algorithms** organized into 4 categories:
   - **Help & Information**: Display help (`--help`) and list algorithms (`--list`)
   - **Console Mode**: Direct hash calculation with `-f/--file` or `-t/--text` flags
   - **Algorithm Selection**: Specify one or multiple algorithms with `-a/--algorithm`
+  - **Batch Mode**: Use all algorithms at once with `--all` / `-A` flag
+  - **Output Formatting**: Choose uppercase (default) or lowercase (`-c/--lowercase`) hex output
   - **Mixed Mode**: Use `-a` in GUI mode to pre-select specific algorithms
   - **Smart Detection**: Automatically detects file vs. text input
   - **UTF-8 Support**: Full Unicode support in console output
   - Example: `HashCalc.exe -f "file.txt" -a SHA256 -a MD5`
+  - Example: `HashCalc.exe -f "file.txt" -A -c` (all algorithms, lowercase)
 - **Keyboard Shortcuts**: Efficient keyboard navigation for power users
   - Press **Enter** in file path field to validate and focus on Calculate button
   - Press **Enter** in text input field to immediately start calculation
@@ -792,6 +795,57 @@ If you encounter any issues or have questions:
 ---
 
 ## Changelog
+
+### 🚀 Version 1.4.1 - Command-Line Parser Module & Batch Processing
+
+**Release Date**: 2026-02-10
+
+#### ✨ New Features
+- **CommandLineParser Module**: New dedicated class for centralized command-line argument parsing
+  - Location: [`src/utils/CommandLineParser.{h,cpp}`](src/utils/CommandLineParser.h)
+  - Centralized mode detection (GUI vs Console)
+  - Algorithm name mapping between display names and factory names
+  - HAVAL pass number extraction and validation (e.g., "HAVAL-3-256", "HAVAL-4-256", "HAVAL-5-256")
+  - Support for all algorithm variants including HAVAL-3/4/5 passes
+- **Batch Processing Mode**: Process all 53+ algorithms with a single flag
+  - `--all` or `-A` flag to use all available algorithms
+  - Works in both GUI mode (pre-selects all) and console mode (calculates all)
+  - Efficient single-pass file reading for all algorithms
+- **Output Formatting**: Customize hash output format
+  - `--lowercase` or `-c` flag for lowercase hexadecimal output
+  - Default: Uppercase hex output (e.g., `A1B2C3D4`)
+  - Lowercase: `a1b2c3d4` (console mode only)
+- **Performance Timing**: Console mode now displays calculation time
+  - High-resolution timing for accurate performance measurement
+  - Shows elapsed time after hash calculations complete
+
+#### 📝 New Command-Line Examples
+```bash
+# Use all 53+ algorithms at once
+HashCalc.exe -f test.txt -A                      # Console mode, all algorithms
+HashCalc.exe test.txt -A                         # GUI mode, pre-select all algorithms
+
+# Lowercase hex output
+HashCalc.exe -f test.txt -a SHA256 -c            # Single algorithm, lowercase
+HashCalc.exe -f test.txt -A --lowercase          # All algorithms, lowercase
+
+# Performance timing in console mode
+HashCalc.exe -f largefile.bin -a SHA256          # Shows calculation time
+```
+
+#### 🎯 Improvements
+- **Better Code Organization**: CLI logic moved from `main.cpp` to dedicated `CommandLineParser` class
+- **Enhanced Console Output**: Aligned columns for better readability in console mode
+- **Flexible Parameter Support**: Support for both short (`-A`, `-c`) and long (`--all`, `--lowercase`) formats
+- **Comprehensive Error Messages**: Better validation and error reporting for invalid parameters
+
+#### 🏗️ Architecture Changes
+- **Refactored Entry Point**: [`src/app/main.cpp`](src/app/main.cpp) simplified to focus on GUI initialization
+- **New Utility Module**: All command-line parsing logic centralized in `CommandLineParser`
+- **Algorithm Info Structure**: New `AlgorithmInfo` struct to handle algorithm ID and HAVAL pass number
+- **Static Algorithm Mappings**: Display name and factory name mappings initialized on first use
+
+---
 
 ### 🚀 Version 1.4.0 - Enhanced Command-Line Interface
 
